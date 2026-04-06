@@ -1,0 +1,102 @@
+services:
+  discovery-ai-nginx:
+    build:
+      context: .docker/nginx
+    ports:
+      - ${PROXY_PORT:-8081}:8081
+    volumes:
+      - "./backend:/var/www/html"
+    depends_on:
+      - discovery-ai-backend
+    networks:
+      - discovery-ai-network
+
+  discovery-ai-backend:
+    container_name: discovery-ai-backend
+    build:
+      context: ./backend
+      dockerfile: ../.docker/backend/Dockerfile
+    ports:
+      - ${BACKEND_PORT:-3000}:3000
+    volumes:
+      - "./backend:/app"
+    depends_on:
+      - discovery-ai-postgres
+    networks:
+      - discovery-ai-network
+
+  discovery-ai-frontend:
+    container_name: discovery-ai-frontend
+    build:
+      context: ./frontend
+      dockerfile: ../.docker/frontend/Dockerfile
+    ports:
+      - ${FRONTEND_PORT:-5173}:5173
+    depends_on:
+      - discovery-ai-backend
+    volumes:
+      - "./frontend:/app"
+      - "/app/node_modules"
+    networks:
+      - discovery-ai-network
+
+  discovery-ai-postgres:
+    container_name: discovery-ai-postgres
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    networks:
+      - discovery-ai-network
+
+  discovery-ai-redis:
+    container_name: discovery-ai-redis
+    build:
+      context: .docker/redis
+    ports:
+      - ${REDIS_PORT:-6379}:6379
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - discovery-ai-network
+
+  discovery-ai-comfyui:
+    container_name: discovery-ai-comfyui
+    image: ghcr.io/ai-dock/comfyui:latest-cuda
+    ports:
+      - ${COMFYUI_PORT:-8188}:8188
+    volumes:
+      - ./comfyui/models:/workspace/ComfyUI/models
+      - ./comfyui/output:/workspace/ComfyUI/output
+      - ./comfyui/custom_nodes:/workspace/ComfyUI/custom_nodes
+      - ./comfyui/workflows:/workspace/ComfyUI/user
+      - ./comfyui/input:/workspace/ComfyUI/input
+    environment:
+      - CLI_ARGS=--listen 0.0.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    networks:
+      - discovery-ai-network
+
+networks:
+  discovery-ai-network:
+
+volumes:
+  pgdata:
+  redisdata:
