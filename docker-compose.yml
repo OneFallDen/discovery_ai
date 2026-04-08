@@ -72,24 +72,26 @@ services:
 
   discovery-ai-comfyui:
     container_name: discovery-ai-comfyui
-    image: ghcr.io/ai-dock/comfyui:latest-cuda
+    image: ghcr.io/clsferguson/comfyui-docker:latest
     ports:
       - ${COMFYUI_PORT:-8188}:8188
     volumes:
-      - ./comfyui/models:/workspace/ComfyUI/models
-      - ./comfyui/output:/workspace/ComfyUI/output
-      - ./comfyui/custom_nodes:/workspace/ComfyUI/custom_nodes
-      - ./comfyui/workflows:/workspace/ComfyUI/user
-      - ./comfyui/input:/workspace/ComfyUI/input
+      - ./comfyui/workspace:/workspace:rshared
     environment:
       - CLI_ARGS=--listen 0.0.0.0
+      - COMFY_AUTO_INSTALL=1
+      - PUID=0
+      - PGID=0
+    entrypoint: ""
+    command: >
+      python /workspace/ComfyUI/main.py --listen 0.0.0.0 --port 8188
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
               count: 1
-              capabilities: [gpu]
+              capabilities: [ gpu ]
     restart: unless-stopped
     networks:
       - discovery-ai-network
