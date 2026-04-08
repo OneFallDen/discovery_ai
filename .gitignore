@@ -61,14 +61,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # ComfyUI
 
-/comfyui/workspace/ComfyUI/.ci
-
-comfyui/workspace/ComfyUI/models/checkpoints/**
-comfyui/workspace/ComfyUI/output/**
-comfyui/workspace/ComfyUI/input/**
-comfyui/workspace/ComfyUI/custom_nodes/**
-
-!comfyui/workspace/ComfyUI/models/checkpoints/.gitkeep
-!comfyui/workspace/ComfyUI/output/.gitkeep
-!comfyui/workspace/ComfyUI/input/.gitkeep
-!comfyui/workspace/ComfyUI/custom_nodes/.gitkeep
+/comfyui/workspace/ComfyUI/
+/comfyui/workspace/environments/
+/comfyui/workspace/home/
+/comfyui/workspace/storage
