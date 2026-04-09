@@ -5,7 +5,9 @@ import { CommonModule } from "./modules/Common/CommonModule";
 import { ImageGenerationModule } from "./modules/ImageGeneration/ImageGenerationModule";
 import { BullModule } from "@nestjs/bull";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { TypeOrmModule } from "@nestjs/typeorm";
 import Joi from "joi";
+import { join } from "path";
 
 @Module({
     imports: [
@@ -35,6 +37,21 @@ import Joi from "joi";
                     host: config.get<string>("REDIS_HOST") ?? "127.0.0.1",
                     port: config.get<number>("REDIS_PORT") ?? 6379,
                 },
+            }),
+        }),
+        TypeOrmModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: (configService: ConfigService) => ({
+                type: "postgres",
+                host: configService.get("POSTGRES_HOST"),
+                port: configService.get("POSTGRES_PORT"),
+                username: configService.get("POSTGRES_USER"),
+                password: configService.get("POSTGRES_PASSWORD"),
+                database: configService.get("POSTGRES_DB"),
+                entities: [join(__dirname, "..", "**", "*.entity.{ts,js}")],
+                synchronize: true, //should be false at production!
+                autoLoadEntities: true,
             }),
         }),
     ],
