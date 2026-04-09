@@ -4,5 +4,5 @@ export enum JobStatus {
     Processing = "processing",
     Ready = "ready",
     Error = "error",
-    Cancelled = "cancelled"
+    Cancelled = "cancelled",
 }
