@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { Query } from "../../Application/UseCases/query";
-import { QueryHandler } from "../../Application/Handlers/query.handler";
+import { Query } from "../../Application/UseCases/Query";
+import { QueryHandler } from "../../Application/Handlers/QueryHandler";
 
 @Injectable()
 export class QueryBus {

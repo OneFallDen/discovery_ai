@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { Command } from "../../Application/UseCases/command";
-import { CommandHandler } from "../../Application/Handlers/command.handler";
+import { Command } from "../../Application/UseCases/Command";
+import { CommandHandler } from "../../Application/Handlers/CommandHandler";
 
 @Injectable()
 export class CommandBus {

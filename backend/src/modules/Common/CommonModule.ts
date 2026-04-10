@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common";
 import { UUID_SERVICE } from "./Domain/Services/Contracts/IUuidService";
 import { UuidService } from "./Infrastructure/Services/UuidService";
-import { QueryBus } from "./Infrastructure/Bus/query.bus";
-import { CommandBus } from "./Infrastructure/Bus/command.bus";
+import { QueryBus } from "./Infrastructure/Bus/QueryBus";
+import { CommandBus } from "./Infrastructure/Bus/CommandBus";
 
 @Module({
     providers: [
