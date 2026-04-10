@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { UUID_SERVICE } from "./Domain/Services/Contracts/IUuidService";
 import { UuidService } from "./Infrastructure/Services/UuidService";
+import { QueryBus } from "./Infrastructure/Bus/query.bus";
+import { CommandBus } from "./Infrastructure/Bus/command.bus";
 
 @Module({
     providers: [
@@ -8,7 +10,9 @@ import { UuidService } from "./Infrastructure/Services/UuidService";
             provide: UUID_SERVICE,
             useClass: UuidService,
         },
+        CommandBus,
+        QueryBus,
     ],
-    exports: [UUID_SERVICE],
+    exports: [UUID_SERVICE, CommandBus, QueryBus],
 })
 export class CommonModule {}
