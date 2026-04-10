@@ -9,6 +9,7 @@ import {
 } from "typeorm";
 import { JobStatus } from "../../../../Domain/Model/ValueObjects/JobStatus";
 import { GeneratedImageOrmEntity } from "./GeneratedImageOrmEntity";
+import * as GenerationParameters from "../../../../Domain/Model/ValueObjects/GenerationParameters";
 
 @Entity("generation_jobs")
 @Index(["status"]) // TODO: add "userId" on auth complete
@@ -27,22 +28,10 @@ export class GenerationJobOrmEntity {
     status: JobStatus;
 
     @Column({ type: "jsonb", nullable: false })
-    params: {
-        positivePrompt: string;
-        negativePrompt?: string;
-        seed: number;
-        width: number;
-        height: number;
-        steps: number;
-        cfg: number;
-        nsfwEnabled: boolean;
-        model?: string;
-        sampler?: string;
-        scheduler?: string;
-    };
+    params: GenerationParameters.GenerationParamsJson;
 
     @Column({ type: "jsonb", nullable: false })
-    workflowJson: Record<string, any>; // полный workflow для ComfyUI
+    workflowJson: Record<string, any>;
 
     @Column({ type: "varchar", length: 100, nullable: true })
     comfyPromptId: string | null;

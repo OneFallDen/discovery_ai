@@ -1,3 +1,17 @@
+export type GenerationParamsJson = {
+    positivePrompt: string;
+    negativePrompt?: string;
+    seed: number;
+    width: number;
+    height: number;
+    steps: number;
+    cfg: number;
+    nsfwEnabled: boolean;
+    model?: string;
+    sampler?: string;
+    scheduler?: string;
+};
+
 export class GenerationParameters {
     constructor(
         private readonly positivePrompt: string,
@@ -56,5 +70,25 @@ export class GenerationParameters {
 
     public getScheduler(): string | undefined {
         return this.scheduler;
+    }
+
+    public toJson(): GenerationParamsJson {
+        const json: GenerationParamsJson = {
+            positivePrompt: this.positivePrompt,
+            seed: this.seed,
+            width: this.width,
+            height: this.height,
+            steps: this.steps,
+            cfg: this.cfg,
+            nsfwEnabled: this.nsfwEnabled,
+        };
+
+        if (this.negativePrompt !== undefined)
+            json.negativePrompt = this.negativePrompt;
+        if (this.model !== undefined) json.model = this.model;
+        if (this.sampler !== undefined) json.sampler = this.sampler;
+        if (this.scheduler !== undefined) json.scheduler = this.scheduler;
+
+        return json;
     }
 }

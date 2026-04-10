@@ -27,6 +27,12 @@ import { join } from "path";
                 JWT_REFRESH_EXPIRES_IN: Joi.string().default("7d"),
                 REDIS_HOST: Joi.string().required(),
                 REDIS_PORT: Joi.string().required(),
+                DEFAULT_GENERATION_STEPS: Joi.string().required(),
+                DEFAULT_GENERATION_CFG: Joi.string().required(),
+                DEFAULT_GENERATION_MODEL: Joi.string().required(),
+                DEFAULT_GENERATION_SAMPLER: Joi.string().required(),
+                DEFAULT_GENERATION_SCHEDULER: Joi.string().required(),
+                DEFAULT_GENERATION_WORKFLOW: Joi.string().required(),
             }),
         }),
         BullModule.forRootAsync({
