@@ -4,4 +4,8 @@ export class Workflow {
     public value(): string {
         return this.workflow;
     }
+
+    public static fromJson(json: Record<string, any>): Workflow {
+        return new Workflow(JSON.stringify(json));
+    }
 }

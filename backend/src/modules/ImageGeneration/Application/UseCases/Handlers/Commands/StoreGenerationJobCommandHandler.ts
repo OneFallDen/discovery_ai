@@ -19,6 +19,9 @@ import {
     GENERATION_JOB_REPOSITORY,
     type IGenerationJobRepository,
 } from "../../../../Domain/Factories/Contracts/IGenerationJobRepository";
+import { Job, Queue } from "bullmq";
+import { InjectQueue } from "@nestjs/bull";
+import { QueueGenerationJobDTO as JobDTO } from "../../../DTO/QueueGenerationJobDTO";
 
 @Injectable()
 export class StoreGenerationJobCommandHandler extends CommandHandler {
@@ -30,6 +33,7 @@ export class StoreGenerationJobCommandHandler extends CommandHandler {
         private readonly config: ConfigService,
         @Inject(GENERATION_JOB_REPOSITORY)
         private readonly repository: IGenerationJobRepository,
+        @InjectQueue("image_queue") private queue: Queue,
     ) {
         super();
     }
@@ -60,7 +64,12 @@ export class StoreGenerationJobCommandHandler extends CommandHandler {
 
         await this.repository.store(aggregate);
 
-        // TODO: add job to queue
+        const dto: JobDTO = new JobDTO(aggregate.getId().value());
+
+        await this.queue.add("queue_image", dto, {
+            attempts: 3,
+            backoff: { type: "exponential", delay: 1000 },
+        });
     }
 
     private replaceParamsInWorkflow(

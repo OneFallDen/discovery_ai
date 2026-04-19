@@ -3,20 +3,27 @@ import { JobStatus } from "../ValueObjects/JobStatus";
 import { GeneratedImage } from "../Entities/GeneratedImage";
 import { GenerationParameters } from "../ValueObjects/GenerationParameters";
 import { Workflow } from "../ValueObjects/Workflow";
+import { GenerationJobAlreadyHandlingException } from "../../Exceptions/GenerationJobAlreadyHandlingException";
+import { AggregateRoot } from "@nestjs/cqrs";
+import { GenerationJobQueuedEvent } from "../../Events/GenerationJobQueuedEvent";
+import {GenerationJobFailedEvent} from "../../Events/GenerationJobFailedEvent";
+import {GenerationJobAlreadyCompletedException} from "../../Exceptions/GenerationJobAlreadyCompletedException";
 
-export class GenerationJob {
+export class GenerationJob extends AggregateRoot {
     private constructor(
         private readonly id: JobId,
         private status: JobStatus,
         private readonly params: GenerationParameters,
         private readonly workflow: Workflow,
         private readonly createdAt: Date,
-        private readonly comfyPromptId: string | null = null,
+        private comfyPromptId: string | null = null,
         private readonly errorMessage: string | null = null,
         private images: GeneratedImage[] = [],
         private updatedAt: Date | null = null,
         private completedAt: Date | null = null,
-    ) {}
+    ) {
+        super();
+    }
 
     public getId(): JobId {
         return this.id;
@@ -72,11 +79,48 @@ export class GenerationJob {
         );
     }
 
+    public static reconstitute(
+        id: JobId,
+        status: JobStatus,
+        params: GenerationParameters,
+        workflow: Workflow,
+        createdAt: Date,
+        comfyPromptId: string | null = null,
+        errorMessage: string | null = null,
+        images: GeneratedImage[] = [],
+        updatedAt: Date | null = null,
+        completedAt: Date | null = null,
+    ): GenerationJob {
+        return new GenerationJob(
+            id,
+            status,
+            params,
+            workflow,
+            createdAt,
+            comfyPromptId,
+            errorMessage,
+            images,
+            updatedAt,
+            completedAt,
+        );
+    }
+
     // Domain methods
-    // queue(): void {
-    // ...
-    // }
-    //
+    public queue(): void {
+        if (this.status === JobStatus.Ready) {
+            throw new GenerationJobAlreadyCompletedException();
+        }
+
+        if (this.status !== JobStatus.Pending) {
+            throw new GenerationJobAlreadyHandlingException();
+        }
+    }
+
+    public queued(comfyPromptId: string): void {
+        this.queue();
+        this.apply(new GenerationJobQueuedEvent(this.id, comfyPromptId));
+    }
+
     // markAsProcessing(): void {
     // ...
     // }
@@ -85,9 +129,18 @@ export class GenerationJob {
     // ...
     // }
     //
-    // fail(error: string): void {
-    // ...
-    // }
+    fail(error: string): void {
+        if (this.status === JobStatus.Ready) {
+            throw new GenerationJobAlreadyCompletedException();
+        }
+
+        this.apply(
+            new GenerationJobFailedEvent(
+                this.id,
+                error
+            )
+        )
+    }
     //
     // regenerate(newParams: Partial<GenerationParameters>): GenerationJob {
     // ...

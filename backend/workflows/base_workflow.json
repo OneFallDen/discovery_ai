@@ -42,7 +42,7 @@
     "inputs": {
       "width": 512,
       "height": 768,
-      "batch_size": 8
+      "batch_size": 1
     },
     "class_type": "EmptyLatentImage",
     "_meta": {
@@ -51,7 +51,7 @@
   },
   "6": {
     "inputs": {
-      "text": "beautiful scenery nature glass bottle landscape, purple galaxy bottle,",
+      "text": "beautiful scenery nature glass bottle landscape, , purple galaxy bottle,",
       "clip": [
         "4",
         1

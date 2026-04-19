@@ -91,4 +91,20 @@ export class GenerationParameters {
 
         return json;
     }
+
+    public static fromJson(json: GenerationParamsJson): GenerationParameters {
+        return new GenerationParameters(
+            json.positivePrompt,
+            json.negativePrompt,
+            json.seed,
+            json.width,
+            json.height,
+            json.steps,
+            json.cfg,
+            json.nsfwEnabled,
+            json.model,
+            json.sampler,
+            json.scheduler,
+        );
+    }
 }
