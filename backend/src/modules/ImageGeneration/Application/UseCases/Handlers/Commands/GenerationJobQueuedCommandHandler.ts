@@ -1,9 +1,9 @@
-import {CommandHandler} from "../../../../../Common/Application/Handlers/CommandHandler";
-import {Inject, Injectable} from "@nestjs/common";
-import {GenerationJobQueuedCommand as Command} from "../../../Input/Commands/GenerationJobQueuedCommand";
+import { CommandHandler } from "../../../../../Common/Application/Handlers/CommandHandler";
+import { Inject, Injectable } from "@nestjs/common";
+import { GenerationJobQueuedCommand as Command } from "../../../Input/Commands/GenerationJobQueuedCommand";
 import {
     GENERATION_JOB_REPOSITORY,
-    type IGenerationJobRepository
+    type IGenerationJobRepository,
 } from "../../../../Domain/Factories/Contracts/IGenerationJobRepository";
 
 @Injectable()

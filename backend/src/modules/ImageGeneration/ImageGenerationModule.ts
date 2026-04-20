@@ -22,7 +22,7 @@ import { QueueGenerationJobMapper } from "./Application/Mappers/QueueGenerationJ
 import { COMFYUI_SERVICE } from "./Domain/Services/Contracts/IComfyUIService";
 import { ComfyUIService } from "./Infrastructure/Services/ComfyUIService";
 import { ImageQueueProcessor } from "./Infrastructure/Processors/ImageQueueProcessor";
-import {QueueImageEvent} from "./Infrastructure/Events/QueueImageEvent";
+import { QueueImageEvent } from "./Infrastructure/Events/QueueImageEvent";
 
 @Module({
     imports: [
@@ -56,7 +56,7 @@ import {QueueImageEvent} from "./Infrastructure/Events/QueueImageEvent";
         QueueGenerationJobCommandHandler,
         QueueGenerationJobMapper,
         ImageQueueProcessor,
-        QueueImageEvent
+        QueueImageEvent,
     ],
     exports: [],
     controllers: [GenerationController],

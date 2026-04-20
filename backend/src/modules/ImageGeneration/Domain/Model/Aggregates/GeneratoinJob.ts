@@ -6,8 +6,8 @@ import { Workflow } from "../ValueObjects/Workflow";
 import { GenerationJobAlreadyHandlingException } from "../../Exceptions/GenerationJobAlreadyHandlingException";
 import { AggregateRoot } from "@nestjs/cqrs";
 import { GenerationJobQueuedEvent } from "../../Events/GenerationJobQueuedEvent";
-import {GenerationJobFailedEvent} from "../../Events/GenerationJobFailedEvent";
-import {GenerationJobAlreadyCompletedException} from "../../Exceptions/GenerationJobAlreadyCompletedException";
+import { GenerationJobFailedEvent } from "../../Events/GenerationJobFailedEvent";
+import { GenerationJobAlreadyCompletedException } from "../../Exceptions/GenerationJobAlreadyCompletedException";
 
 export class GenerationJob extends AggregateRoot {
     private constructor(
@@ -134,12 +134,7 @@ export class GenerationJob extends AggregateRoot {
             throw new GenerationJobAlreadyCompletedException();
         }
 
-        this.apply(
-            new GenerationJobFailedEvent(
-                this.id,
-                error
-            )
-        )
+        this.apply(new GenerationJobFailedEvent(this.id, error));
     }
     //
     // regenerate(newParams: Partial<GenerationParameters>): GenerationJob {
