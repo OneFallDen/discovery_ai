@@ -23,6 +23,20 @@ import { COMFYUI_SERVICE } from "./Domain/Services/Contracts/IComfyUIService";
 import { ComfyUIService } from "./Infrastructure/Services/ComfyUIService";
 import { ImageQueueProcessor } from "./Infrastructure/Processors/ImageQueueProcessor";
 import { QueueImageEvent } from "./Infrastructure/Events/QueueImageEvent";
+import { GenerationJobFailedUseCase } from "./Application/UseCases/GenerationJobFailedUseCase";
+import { GenerationJobQueuedUseCase } from "./Application/UseCases/GenerationJobQueuedUseCase";
+import { GenerationJobQueuedCommandHandler } from "./Application/UseCases/Handlers/Commands/GenerationJobQueuedCommandHandler";
+import { GenerationJobFailedCommandHandler } from "./Application/UseCases/Handlers/Commands/GenerationJobFailedCommandHandler";
+import { GenerationJobFailedCommand } from "./Application/Input/Commands/GenerationJobFailedCommand";
+import { GenerationJobQueuedCommand } from "./Application/Input/Commands/GenerationJobQueuedCommand";
+import { GenerationJobFailedMapper } from "./Application/Mappers/GenerationJobFailedMapper";
+import { GenerationJobQueuedMapper } from "./Application/Mappers/GenerationJobQueuedMapper";
+import { ConfigService } from "@nestjs/config";
+import WebSocket from "ws";
+import { GenerationJobCompletedCommandHandler } from "./Application/UseCases/Handlers/Commands/GenerationJobCompletedCommandHandler";
+import { GenerationJobCompletedUseCase } from "./Application/UseCases/GenerationJobCompletedUseCase";
+import { GenerationJobCompletedCommand } from "./Application/Input/Commands/GenerationJobCompletedCommand";
+import { GenerationJobCompletedMapper } from "./Application/Mappers/GenerationJobCompletedMapper";
 
 @Module({
     imports: [
@@ -57,15 +71,30 @@ import { QueueImageEvent } from "./Infrastructure/Events/QueueImageEvent";
         QueueGenerationJobMapper,
         ImageQueueProcessor,
         QueueImageEvent,
+        GenerationJobFailedUseCase,
+        GenerationJobQueuedUseCase,
+        GenerationJobFailedMapper,
+        GenerationJobQueuedMapper,
+        GenerationJobQueuedCommandHandler,
+        GenerationJobFailedCommandHandler,
+        GenerationJobCompletedCommandHandler,
+        GenerationJobCompletedUseCase,
+        GenerationJobCompletedMapper,
     ],
     exports: [],
     controllers: [GenerationController],
 })
 export class ImageGenerationModule {
+    private ws: WebSocket;
+
     constructor(
         private readonly commandBus: CommandBus,
         private readonly storeGenerationJobCommandHandler: StoreGenerationJobCommandHandler,
         private readonly queueGenerationJobCommandHandler: QueueGenerationJobCommandHandler,
+        private readonly generationJobQueuedCommandHandler: GenerationJobQueuedCommandHandler,
+        private readonly generationJobFailedCommandHandler: GenerationJobFailedCommandHandler,
+        private readonly generationJobCompletedCommandHandler: GenerationJobCompletedCommandHandler,
+        private readonly config: ConfigService,
     ) {}
 
     onModuleInit(): void {
@@ -77,5 +106,41 @@ export class ImageGenerationModule {
             QueueGenerationJobCommand,
             this.queueGenerationJobCommandHandler,
         );
+        this.commandBus.register(
+            GenerationJobQueuedCommand,
+            this.generationJobQueuedCommandHandler,
+        );
+        this.commandBus.register(
+            GenerationJobFailedCommand,
+            this.generationJobFailedCommandHandler,
+        );
+        this.commandBus.register(
+            GenerationJobCompletedCommand,
+            this.generationJobCompletedCommandHandler,
+        );
+
+        this.ws = new WebSocket(
+            this.config.get<string>("DEFAULT_COMFYUI_WS") ||
+                "ws://127.0.0.1:8188/ws",
+        );
+
+        this.ws.on("message", async (data: Buffer) => {
+            const msg = JSON.parse(data.toString());
+
+            if (
+                msg.type === "execution_success" ||
+                msg.type === "execution_error"
+            ) {
+                const promptId = msg.data.prompt_id;
+
+                if (msg.type === "execution_success") {
+                } else {
+                }
+            }
+        });
+    }
+
+    onModuleDestroy() {
+        this.ws?.close();
     }
 }

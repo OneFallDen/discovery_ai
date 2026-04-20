@@ -34,6 +34,7 @@ import { join } from "path";
                 DEFAULT_GENERATION_SCHEDULER: Joi.string().required(),
                 DEFAULT_GENERATION_WORKFLOW: Joi.string().required(),
                 DEFAULT_COMFYUI_URL: Joi.string().required(),
+                DEFAULT_COMFYUI_WS: Joi.string().required(),
             }),
         }),
         BullModule.forRootAsync({

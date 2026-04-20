@@ -8,6 +8,8 @@ import { AggregateRoot } from "@nestjs/cqrs";
 import { GenerationJobQueuedEvent } from "../../Events/GenerationJobQueuedEvent";
 import { GenerationJobFailedEvent } from "../../Events/GenerationJobFailedEvent";
 import { GenerationJobAlreadyCompletedException } from "../../Exceptions/GenerationJobAlreadyCompletedException";
+import { GenerationJobAlreadyFailedException } from "../../Exceptions/GenerationJobAlreadyFailedException";
+import { GenerationJobCompletedEvent } from "../../Events/GenerationJobCompletedEvent";
 
 export class GenerationJob extends AggregateRoot {
     private constructor(
@@ -124,19 +126,26 @@ export class GenerationJob extends AggregateRoot {
     // markAsProcessing(): void {
     // ...
     // }
-    //
-    // complete(images: GeneratedImage[]): void {
-    // ...
-    // }
-    //
-    fail(error: string): void {
+
+    public complete() // images: GeneratedImage[]
+    : void {
+        if (this.status === JobStatus.Error) {
+            throw new GenerationJobAlreadyFailedException();
+        }
+
+        this.status = JobStatus.Ready;
+
+        this.apply(new GenerationJobCompletedEvent(this.id));
+    }
+
+    public fail(error: string): void {
         if (this.status === JobStatus.Ready) {
             throw new GenerationJobAlreadyCompletedException();
         }
 
         this.apply(new GenerationJobFailedEvent(this.id, error));
     }
-    //
+
     // regenerate(newParams: Partial<GenerationParameters>): GenerationJob {
     // ...
     // }

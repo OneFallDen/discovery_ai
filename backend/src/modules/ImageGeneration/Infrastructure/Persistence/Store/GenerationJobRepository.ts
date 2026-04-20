@@ -86,4 +86,19 @@ export class GenerationJobRepository implements IGenerationJobRepository {
 
         await this.repository.save(model);
     }
+
+    public async complete(id: string): Promise<void> {
+        const model = await this.repository
+            .createQueryBuilder("generation_jobs")
+            .where({ id: id })
+            .getOne();
+
+        if (!model) {
+            throw new GenerationJobNotFoundException();
+        }
+
+        model.status = JobStatus.Ready;
+
+        await this.repository.save(model);
+    }
 }
