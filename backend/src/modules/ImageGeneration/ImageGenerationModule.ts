@@ -42,6 +42,11 @@ import { CompleteGenerationJobCommand } from "./Application/Input/Commands/Compl
 import { CompleteGenerationJobCommandHandler } from "./Application/UseCases/Handlers/Commands/CompleteGenerationJobCommandHandler";
 import { CompleteGenerationJobMapper } from "./Application/Mappers/CompleteGenerationJobMapper";
 import { CompleteGenerationJobDTO } from "./Application/DTO/CompleteGenerationJobDTO";
+import { FailGenerationJobMapper } from "./Application/Mappers/FailGenerationJobMapper";
+import { FailGenerationJobCommandHandler } from "./Application/UseCases/Handlers/Commands/FailGenerationJobCommandHandler";
+import { FailGenerationJobUseCase } from "./Application/UseCases/FailGenerationJobUseCase";
+import { FailGenerationJobCommand } from "./Application/Input/Commands/FailGenerationJobCommand";
+import { FailGenerationJobDTO } from "./Application/DTO/FailGenerationJobDTO";
 
 @Module({
     imports: [
@@ -88,6 +93,9 @@ import { CompleteGenerationJobDTO } from "./Application/DTO/CompleteGenerationJo
         CompleteGenerationJobUseCase,
         CompleteGenerationJobCommandHandler,
         CompleteGenerationJobMapper,
+        FailGenerationJobMapper,
+        FailGenerationJobCommandHandler,
+        FailGenerationJobUseCase,
     ],
     exports: [],
     controllers: [GenerationController],
@@ -103,7 +111,9 @@ export class ImageGenerationModule {
         private readonly generationJobFailedCommandHandler: GenerationJobFailedCommandHandler,
         private readonly generationJobCompletedCommandHandler: GenerationJobCompletedCommandHandler,
         private readonly completeGenerationJobCommandHandler: CompleteGenerationJobCommandHandler,
+        private readonly failGenerationJobCommandHandler: FailGenerationJobCommandHandler,
         private readonly completeGenerationJobUseCase: CompleteGenerationJobUseCase,
+        private readonly failGenerationJobUseCase: FailGenerationJobUseCase,
         private readonly config: ConfigService,
     ) {}
 
@@ -132,6 +142,10 @@ export class ImageGenerationModule {
             CompleteGenerationJobCommand,
             this.completeGenerationJobCommandHandler,
         );
+        this.commandBus.register(
+            FailGenerationJobCommand,
+            this.failGenerationJobCommandHandler,
+        );
 
         this.ws = new WebSocket(
             this.config.get<string>("DEFAULT_COMFYUI_WS") ||
@@ -152,6 +166,10 @@ export class ImageGenerationModule {
                         new CompleteGenerationJobDTO(promptId),
                     );
                 } else {
+                    const error = msg.data.exception_message;
+                    await this.failGenerationJobUseCase.execute(
+                        new FailGenerationJobDTO(promptId, error),
+                    );
                 }
             }
         });
