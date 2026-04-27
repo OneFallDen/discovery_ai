@@ -7,13 +7,17 @@ import { StoreGenerationJobDTO as DTO } from "../../../Application/DTO/StoreGene
 export class StoreGenerationJobMapper {
     constructor(private readonly config: ConfigService) {}
 
+    private generateSeed(): number {
+        return Math.floor(Math.random() * 2147483647);
+    }
+
     public map(request: Request): DTO {
         return {
             positivePrompt: request.positivePrompt,
             negativePrompt: request.negativePrompt
                 ? request.negativePrompt
                 : null,
-            seed: request.seed ? request.seed : null,
+            seed: request.seed ? request.seed : this.generateSeed(),
             width: request.width,
             height: request.height,
             steps: request.steps
