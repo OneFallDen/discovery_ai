@@ -42,7 +42,7 @@ export class GenerationJobReader implements IGenerationJobReader {
     public async last(): Promise<GenerationJobReadModel> {
         const model = await this.repository
             .createQueryBuilder("generation_jobs")
-            .orderBy("uuid", "DESC")
+            .orderBy("id", "DESC")
             .getOne();
 
         if (!model) {
@@ -53,14 +53,16 @@ export class GenerationJobReader implements IGenerationJobReader {
             id: model.id,
             status: model.status.toString(),
             createdAt: model.createdAt,
-            images: model.images.map((image) => {
-                return {
-                    id: image.id,
-                    filename: image.filename,
-                    url: image.url,
-                    metadata: image.metadata,
-                } as GeneratedImageReadModel;
-            }),
+            images: model.images
+                ? model.images.map((image) => {
+                      return {
+                          id: image.id,
+                          filename: image.filename,
+                          url: image.url,
+                          metadata: image.metadata,
+                      } as GeneratedImageReadModel;
+                  })
+                : [],
         } as GenerationJobReadModel;
     }
 }

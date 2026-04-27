@@ -10,7 +10,6 @@ export class QueueImageEvent {
     public async handle(job: Job<JobDTO>): Promise<void> {
         try {
             await this.useCase.execute(job.data);
-            console.info("Image queued");
         } catch (error) {
             console.error(error);
         }

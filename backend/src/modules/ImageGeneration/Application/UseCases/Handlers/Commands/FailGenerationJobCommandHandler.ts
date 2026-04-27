@@ -6,20 +6,23 @@ import {
 } from "../../../../Domain/Factories/Contracts/IGenerationJobRepository";
 import { FailGenerationJobCommand as Command } from "../../../Input/Commands/FailGenerationJobCommand";
 import { GenerationJob as Aggregate } from "../../../../Domain/Model/Aggregates/GeneratoinJob";
+import { EventPublisher } from "@nestjs/cqrs";
 
 @Injectable()
 export class FailGenerationJobCommandHandler extends CommandHandler {
     constructor(
         @Inject(GENERATION_JOB_REPOSITORY)
         private readonly repository: IGenerationJobRepository,
+        private readonly publisher: EventPublisher,
     ) {
         super();
     }
 
     public async execute(command: Command): Promise<void> {
-        const aggregate: Aggregate = await this.repository.findByPromptId(
+        let aggregate: Aggregate = await this.repository.findByPromptId(
             command.dto.promptId,
         );
+        aggregate = this.publisher.mergeObjectContext(aggregate);
         aggregate.fail(command.dto.error);
         aggregate.commit();
     }

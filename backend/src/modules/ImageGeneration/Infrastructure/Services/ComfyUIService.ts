@@ -6,21 +6,26 @@ import { ComfyUIImageDTO } from "../DTO/ComfyUIImageDTO";
 @Injectable()
 export class ComfyUIService implements IComfyUIService {
     private readonly baseUrl: string;
+    private readonly clientId: string;
 
     constructor(private readonly config: ConfigService) {
         this.baseUrl =
             this.config.get<string>("DEFAULT_COMFYUI_URL") ||
             "http://127.0.0.1:8188";
+        this.clientId =
+            this.config.get<string>("DEFAULT_COMFYUI_CLIENT_ID") ||
+            crypto.randomUUID();
     }
 
     public async queuePrompt(workflow: string): Promise<string> {
         const response = await fetch(`${this.baseUrl}/prompt`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: JSON.parse(workflow) }),
+            body: JSON.stringify({
+                prompt: JSON.parse(workflow),
+                client_id: this.clientId,
+            }),
         });
-
-        console.error(new Error("ComfyUI error"));
 
         if (!response.ok) throw new Error("ComfyUI error");
         const { prompt_id } = await response.json();

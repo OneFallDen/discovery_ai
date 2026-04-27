@@ -10,6 +10,7 @@ import {
     COMFYUI_SERVICE,
     type IComfyUIService,
 } from "../../../../Domain/Services/Contracts/IComfyUIService";
+import { EventPublisher } from "@nestjs/cqrs";
 
 @Injectable()
 export class QueueGenerationJobCommandHandler extends CommandHandler {
@@ -18,14 +19,18 @@ export class QueueGenerationJobCommandHandler extends CommandHandler {
         private readonly repository: IGenerationJobRepository,
         @Inject(COMFYUI_SERVICE)
         private readonly comfyUIService: IComfyUIService,
+        private readonly publisher: EventPublisher,
     ) {
         super();
     }
 
     public async execute(command: Command): Promise<void> {
-        const aggregate: Aggregate = await this.repository.find(
+        const loadedAggregate: Aggregate = await this.repository.find(
             command.dto.uuid,
         );
+
+        const aggregate: Aggregate =
+            this.publisher.mergeObjectContext(loadedAggregate);
 
         try {
             aggregate.queue();

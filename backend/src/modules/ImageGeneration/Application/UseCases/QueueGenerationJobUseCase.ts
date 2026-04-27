@@ -13,7 +13,5 @@ export class QueueGenerationJobUseCase {
     public async execute(dto: DTO): Promise<void> {
         const command = this.queueGenerationJobMapper.map(dto);
         await this.commandBus.execute(command);
-
-        // TODO: add job for status change
     }
 }

@@ -16,6 +16,7 @@ import {
     type IUuidService,
     UUID_SERVICE,
 } from "../../../../../Common/Domain/Services/Contracts/IUuidService";
+import { EventPublisher } from "@nestjs/cqrs";
 
 @Injectable()
 export class CompleteGenerationJobCommandHandler extends CommandHandler {
@@ -26,14 +27,17 @@ export class CompleteGenerationJobCommandHandler extends CommandHandler {
         private readonly comfyUIService: IComfyUIService,
         @Inject(UUID_SERVICE)
         private readonly uuidService: IUuidService,
+        private readonly publisher: EventPublisher,
     ) {
         super();
     }
 
     public async execute(command: Command): Promise<void> {
-        const aggregate: Aggregate = await this.repository.findByPromptId(
+        let aggregate: Aggregate = await this.repository.findByPromptId(
             command.dto.promptId,
         );
+
+        aggregate = this.publisher.mergeObjectContext(aggregate);
 
         const images = await this.comfyUIService.getGeneratedImages(
             command.dto.promptId,

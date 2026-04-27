@@ -53,6 +53,10 @@ import { GetLastGenerationJobQueryHandler } from "./Application/UseCases/Handler
 import { QueryBus } from "../Common/Infrastructure/Bus/QueryBus";
 import { GetLastGenerationJobQuery } from "./Application/Input/Queries/GetLastGenerationJobQuery";
 import { GetLastGenerationJobMapper } from "./Application/Mappers/GetLastGenerationJobMapper";
+import { CqrsModule } from "@nestjs/cqrs";
+import { GenerationJobQueuedHandler } from "./Application/EventHandlers/GeneratoinJobQueuedHandler";
+import { GenerationJobFailedHandler } from "./Application/EventHandlers/GenerationJobFailedHandler";
+import { GenerationJobCompletedHandler } from "./Application/EventHandlers/GenerationJobCompletedHandler";
 
 @Module({
     imports: [
@@ -64,6 +68,7 @@ import { GetLastGenerationJobMapper } from "./Application/Mappers/GetLastGenerat
             GenerationJobOrmEntity,
             GeneratedImageOrmEntity,
         ]),
+        CqrsModule,
     ],
     providers: [
         {
@@ -108,6 +113,9 @@ import { GetLastGenerationJobMapper } from "./Application/Mappers/GetLastGenerat
         FailGenerationJobUseCase,
         GetLastGenerationJobQueryHandler,
         GetLastGenerationJobMapper,
+        GenerationJobQueuedHandler,
+        GenerationJobFailedHandler,
+        GenerationJobCompletedHandler,
     ],
     exports: [],
     controllers: [GenerationController],
@@ -166,13 +174,19 @@ export class ImageGenerationModule {
             this.getLastGenerationJobQueryHandler,
         );
 
-        this.ws = new WebSocket(
+        const base =
             this.config.get<string>("DEFAULT_COMFYUI_WS") ||
-                "ws://127.0.0.1:8188/ws",
-        );
+            "ws://127.0.0.1:8188/ws";
+        const clientId =
+            this.config.get<string>("DEFAULT_COMFYUI_CLIENT_ID") ||
+            crypto.randomUUID();
+
+        this.ws = new WebSocket(`${base}?clientId=${clientId}`);
 
         this.ws.on("message", async (data: Buffer) => {
             const msg = JSON.parse(data.toString());
+
+            console.log(msg);
 
             if (
                 msg.type === "execution_success" ||
@@ -181,9 +195,13 @@ export class ImageGenerationModule {
                 const promptId = msg.data.prompt_id;
 
                 if (msg.type === "execution_success") {
-                    await this.completeGenerationJobUseCase.execute(
-                        new CompleteGenerationJobDTO(promptId),
-                    );
+                    try {
+                        await this.completeGenerationJobUseCase.execute(
+                            new CompleteGenerationJobDTO(promptId),
+                        );
+                    } catch (e) {
+                        console.error(e);
+                    }
                     // TODO: send to frontend
                 } else {
                     const error = msg.data.exception_message;
