@@ -47,6 +47,12 @@ import { FailGenerationJobCommandHandler } from "./Application/UseCases/Handlers
 import { FailGenerationJobUseCase } from "./Application/UseCases/FailGenerationJobUseCase";
 import { FailGenerationJobCommand } from "./Application/Input/Commands/FailGenerationJobCommand";
 import { FailGenerationJobDTO } from "./Application/DTO/FailGenerationJobDTO";
+import { GENERATION_JOB_READER } from "./Domain/Factories/Contracts/IGenerationJobReader";
+import { GenerationJobReader } from "./Infrastructure/Persistence/Read/GenerationJobReader";
+import { GetLastGenerationJobQueryHandler } from "./Application/UseCases/Handlers/Queries/GetLastGenerationJobQueryHandler";
+import { QueryBus } from "../Common/Infrastructure/Bus/QueryBus";
+import { GetLastGenerationJobQuery } from "./Application/Input/Queries/GetLastGenerationJobQuery";
+import { GetLastGenerationJobMapper } from "./Application/Mappers/GetLastGenerationJobMapper";
 
 @Module({
     imports: [
@@ -72,6 +78,10 @@ import { FailGenerationJobDTO } from "./Application/DTO/FailGenerationJobDTO";
             provide: COMFYUI_SERVICE,
             useClass: ComfyUIService,
         },
+        {
+            provide: GENERATION_JOB_READER,
+            useClass: GenerationJobReader,
+        },
         StoreGenerationJobUseCase,
         StoreGenerationJobMapper,
         StoreGenerationJobCommandMapper,
@@ -96,6 +106,8 @@ import { FailGenerationJobDTO } from "./Application/DTO/FailGenerationJobDTO";
         FailGenerationJobMapper,
         FailGenerationJobCommandHandler,
         FailGenerationJobUseCase,
+        GetLastGenerationJobQueryHandler,
+        GetLastGenerationJobMapper,
     ],
     exports: [],
     controllers: [GenerationController],
@@ -105,6 +117,7 @@ export class ImageGenerationModule {
 
     constructor(
         private readonly commandBus: CommandBus,
+        private readonly queryBus: QueryBus,
         private readonly storeGenerationJobCommandHandler: StoreGenerationJobCommandHandler,
         private readonly queueGenerationJobCommandHandler: QueueGenerationJobCommandHandler,
         private readonly generationJobQueuedCommandHandler: GenerationJobQueuedCommandHandler,
@@ -112,6 +125,7 @@ export class ImageGenerationModule {
         private readonly generationJobCompletedCommandHandler: GenerationJobCompletedCommandHandler,
         private readonly completeGenerationJobCommandHandler: CompleteGenerationJobCommandHandler,
         private readonly failGenerationJobCommandHandler: FailGenerationJobCommandHandler,
+        private readonly getLastGenerationJobQueryHandler: GetLastGenerationJobQueryHandler,
         private readonly completeGenerationJobUseCase: CompleteGenerationJobUseCase,
         private readonly failGenerationJobUseCase: FailGenerationJobUseCase,
         private readonly config: ConfigService,
@@ -145,6 +159,11 @@ export class ImageGenerationModule {
         this.commandBus.register(
             FailGenerationJobCommand,
             this.failGenerationJobCommandHandler,
+        );
+
+        this.queryBus.register(
+            GetLastGenerationJobQuery,
+            this.getLastGenerationJobQueryHandler,
         );
 
         this.ws = new WebSocket(
