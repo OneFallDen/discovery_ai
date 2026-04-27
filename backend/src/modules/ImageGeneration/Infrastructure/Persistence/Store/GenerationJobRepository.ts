@@ -9,6 +9,8 @@ import { JobId } from "../../../Domain/Model/ValueObjects/JobId";
 import { GenerationParameters } from "../../../Domain/Model/ValueObjects/GenerationParameters";
 import { Workflow } from "../../../Domain/Model/ValueObjects/Workflow";
 import { JobStatus } from "../../../Domain/Model/ValueObjects/JobStatus";
+import { GeneratedImage } from "../../../Domain/Model/Entities/GeneratedImage";
+import { GeneratedImageOrmEntity } from "../Entity/TypeORM/GeneratedImageOrmEntity";
 
 @Injectable()
 export class GenerationJobRepository implements IGenerationJobRepository {
@@ -72,7 +74,7 @@ export class GenerationJobRepository implements IGenerationJobRepository {
         await this.repository.save(model);
     }
 
-    public async complete(id: string): Promise<void> {
+    public async complete(id: string, images: GeneratedImage[]): Promise<void> {
         const model = await this.repository
             .createQueryBuilder("generation_jobs")
             .where({ id: id })
@@ -82,7 +84,19 @@ export class GenerationJobRepository implements IGenerationJobRepository {
             throw new GenerationJobNotFoundException();
         }
 
+        const imagesOrmEntities = images.map((image) => {
+            const ormEntity = new GeneratedImageOrmEntity();
+
+            ormEntity.jobId = image.getJobId().value();
+            ormEntity.filename = image.getFilename();
+            ormEntity.url = image.getUrl();
+            ormEntity.metadata = image.getMetadata().toJson();
+
+            return ormEntity;
+        });
+
         model.status = JobStatus.Ready;
+        model.images = imagesOrmEntities;
 
         await this.repository.save(model);
     }

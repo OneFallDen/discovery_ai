@@ -127,15 +127,16 @@ export class GenerationJob extends AggregateRoot {
     // ...
     // }
 
-    public complete() // images: GeneratedImage[]
-    : void {
+    public complete(images: GeneratedImage[] = []): void {
         if (this.status === JobStatus.Error) {
             throw new GenerationJobAlreadyFailedException();
         }
 
         this.status = JobStatus.Ready;
 
-        this.apply(new GenerationJobCompletedEvent(this.id));
+        this.images = images;
+
+        this.apply(new GenerationJobCompletedEvent(this.id, this.images));
     }
 
     public fail(error: string): void {

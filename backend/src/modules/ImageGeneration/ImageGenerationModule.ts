@@ -165,6 +165,7 @@ export class ImageGenerationModule {
                     await this.completeGenerationJobUseCase.execute(
                         new CompleteGenerationJobDTO(promptId),
                     );
+                    // TODO: send to frontend
                 } else {
                     const error = msg.data.exception_message;
                     await this.failGenerationJobUseCase.execute(

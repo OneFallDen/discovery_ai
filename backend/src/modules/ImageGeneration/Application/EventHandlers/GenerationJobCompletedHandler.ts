@@ -8,6 +8,6 @@ export class GenerationJobCompletedHandler implements IEventHandler<Event> {
     constructor(private readonly useCase: UseCase) {}
 
     public async handle(event: Event): Promise<void> {
-        await this.useCase.execute(new DTO(event.id.value()));
+        await this.useCase.execute(new DTO(event.id.value(), event.images));
     }
 }

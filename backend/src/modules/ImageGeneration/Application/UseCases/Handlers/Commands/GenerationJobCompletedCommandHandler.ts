@@ -16,6 +16,6 @@ export class GenerationJobCompletedCommandHandler extends CommandHandler {
     }
 
     public async execute(command: Command): Promise<void> {
-        await this.repository.complete(command.dto.id);
+        await this.repository.complete(command.dto.id, command.dto.images);
     }
 }
