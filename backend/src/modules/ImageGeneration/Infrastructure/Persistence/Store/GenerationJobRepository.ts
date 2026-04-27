@@ -37,22 +37,7 @@ export class GenerationJobRepository implements IGenerationJobRepository {
             .where({ id: id })
             .getOne();
 
-        if (!model) {
-            throw new GenerationJobNotFoundException();
-        }
-
-        return Aggregate.reconstitute(
-            new JobId(model.id),
-            model.status,
-            GenerationParameters.fromJson(model.params),
-            Workflow.fromJson(model.workflowJson),
-            model.createdAt,
-            model.comfyPromptId ?? null,
-            model.errorMessage ?? null,
-            [],
-            model.updatedAt ?? null,
-            model.completedAt ?? null,
-        );
+        return await this.reconstituteFromOrm(model);
     }
 
     public async queue(id: string, comfyUiId: string): Promise<void> {
@@ -100,5 +85,35 @@ export class GenerationJobRepository implements IGenerationJobRepository {
         model.status = JobStatus.Ready;
 
         await this.repository.save(model);
+    }
+
+    public async findByPromptId(promptId: string): Promise<Aggregate> {
+        const model = await this.repository
+            .createQueryBuilder("generation_jobs")
+            .where({ comfyPromptId: promptId })
+            .getOne();
+
+        return await this.reconstituteFromOrm(model);
+    }
+
+    private async reconstituteFromOrm(
+        model: GenerationJobOrmEntity | null,
+    ): Promise<Aggregate> {
+        if (!model) {
+            throw new GenerationJobNotFoundException();
+        }
+
+        return Aggregate.reconstitute(
+            new JobId(model.id),
+            model.status,
+            GenerationParameters.fromJson(model.params),
+            Workflow.fromJson(model.workflowJson),
+            model.createdAt,
+            model.comfyPromptId ?? null,
+            model.errorMessage ?? null,
+            [],
+            model.updatedAt ?? null,
+            model.completedAt ?? null,
+        );
     }
 }
