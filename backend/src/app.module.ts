@@ -36,6 +36,7 @@ import { join } from "path";
                 DEFAULT_COMFYUI_URL: Joi.string().required(),
                 DEFAULT_COMFYUI_WS: Joi.string().required(),
                 DEFAULT_COMFYUI_CLIENT_ID: Joi.string().required(),
+                DEFAULT_SAFE_MODE_PROMPT: Joi.string().required(),
             }),
         }),
         BullModule.forRootAsync({

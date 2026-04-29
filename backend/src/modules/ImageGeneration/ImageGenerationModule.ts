@@ -57,6 +57,10 @@ import { CqrsModule } from "@nestjs/cqrs";
 import { GenerationJobQueuedHandler } from "./Application/EventHandlers/GeneratoinJobQueuedHandler";
 import { GenerationJobFailedHandler } from "./Application/EventHandlers/GenerationJobFailedHandler";
 import { GenerationJobCompletedHandler } from "./Application/EventHandlers/GenerationJobCompletedHandler";
+import { ImageEventsGateway } from "./Presentation/Http/WebSocket/ImageEventsGateway";
+import { GetGenerationJobCompletedMessageQueryHandler } from "./Application/UseCases/Handlers/Queries/GetGenerationJobCompletedMessageQueryHandler";
+import { GetGenerationJobCompletedMessageQuery } from "./Application/Input/Queries/GetGenerationJobCompletedMessageQuery";
+import { GetGenerationJobCompletedMessageMapper } from "./Application/Mappers/GetGenerationJobCompletedMessageMapper";
 
 @Module({
     imports: [
@@ -116,6 +120,9 @@ import { GenerationJobCompletedHandler } from "./Application/EventHandlers/Gener
         GenerationJobQueuedHandler,
         GenerationJobFailedHandler,
         GenerationJobCompletedHandler,
+        ImageEventsGateway,
+        GetGenerationJobCompletedMessageQueryHandler,
+        GetGenerationJobCompletedMessageMapper,
     ],
     exports: [],
     controllers: [GenerationController],
@@ -134,9 +141,11 @@ export class ImageGenerationModule {
         private readonly completeGenerationJobCommandHandler: CompleteGenerationJobCommandHandler,
         private readonly failGenerationJobCommandHandler: FailGenerationJobCommandHandler,
         private readonly getLastGenerationJobQueryHandler: GetLastGenerationJobQueryHandler,
+        private readonly getGenerationJobCompletedMessageQueryHandler: GetGenerationJobCompletedMessageQueryHandler,
         private readonly completeGenerationJobUseCase: CompleteGenerationJobUseCase,
         private readonly failGenerationJobUseCase: FailGenerationJobUseCase,
         private readonly config: ConfigService,
+        private readonly imageEventsGateway: ImageEventsGateway,
     ) {}
 
     onModuleInit(): void {
@@ -173,6 +182,10 @@ export class ImageGenerationModule {
             GetLastGenerationJobQuery,
             this.getLastGenerationJobQueryHandler,
         );
+        this.queryBus.register(
+            GetGenerationJobCompletedMessageQuery,
+            this.getGenerationJobCompletedMessageQueryHandler,
+        );
 
         const base =
             this.config.get<string>("DEFAULT_COMFYUI_WS") ||
@@ -186,8 +199,6 @@ export class ImageGenerationModule {
         this.ws.on("message", async (data: Buffer) => {
             const msg = JSON.parse(data.toString());
 
-            console.log(msg);
-
             if (
                 msg.type === "execution_success" ||
                 msg.type === "execution_error"
@@ -196,13 +207,14 @@ export class ImageGenerationModule {
 
                 if (msg.type === "execution_success") {
                     try {
-                        await this.completeGenerationJobUseCase.execute(
-                            new CompleteGenerationJobDTO(promptId),
-                        );
+                        const img =
+                            await this.completeGenerationJobUseCase.execute(
+                                new CompleteGenerationJobDTO(promptId),
+                            );
+                        this.imageEventsGateway.sendImageReady(img.id, img.url);
                     } catch (e) {
                         console.error(e);
                     }
-                    // TODO: send to frontend
                 } else {
                     const error = msg.data.exception_message;
                     await this.failGenerationJobUseCase.execute(
