@@ -14,9 +14,11 @@ export class StoreGenerationJobMapper {
     public map(request: Request): DTO {
         return {
             positivePrompt: request.positivePrompt,
-            negativePrompt: request.negativePrompt
+            negativePrompt: !request.safeMode
                 ? request.negativePrompt
-                : null,
+                    ? request.negativePrompt
+                    : null
+                : this.config.get<string>("DEFAULT_SAFE_MODE_PROMPT"),
             seed: request.seed ? request.seed : this.generateSeed(),
             width: request.width,
             height: request.height,
@@ -26,7 +28,7 @@ export class StoreGenerationJobMapper {
             cfg: request.cfg
                 ? request.cfg
                 : this.config.get<string>("DEFAULT_GENERATION_CFG"),
-            nsfwEnabled: request.nsfwEnabled,
+            nsfwEnabled: !request.safeMode,
             model: request.model
                 ? request.model
                 : this.config.get<string>("DEFAULT_GENERATION_MODEL"),
