@@ -1,23 +1,33 @@
-import './App.css';
-import ControlsPanel from './components/ControlsPanel';
-import ImageCard from './components/ImageCard';
-import { useCallback, useState, useEffect, useRef } from 'react';
+import "./App.css";
+import ControlsPanel from "./components/ControlsPanel";
+import ImageCard from "./components/ImageCard";
+import { useCallback, useState, useEffect, useRef } from "react";
+import ImageModal from "./components/ImageModal/ImageModal.tsx";
 
 interface ImageItem {
     id: string;
-    status: 'pending' | 'completed';
+    status: "pending" | "completed";
     url?: string;
     ratio: number;
 }
 
 function App() {
-    const [prompt, setPrompt] = useState('');
+    const [prompt, setPrompt] = useState("");
     const [ratio, setRatio] = useState(1);
+    const [width, setWidth] = useState(665);
+    const [height, setHeight] = useState(665);
     const [isSafe, setIsSafe] = useState(true);
+    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
 
     const [images, setImages] = useState<ImageItem[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [autoLoadEnabled, setAutoLoadEnabled] = useState(false);
+
+    const onRatioChange = (ratio: number, width: number, height: number) => {
+        setRatio(ratio);
+        setWidth(width);
+        setHeight(height);
+    };
 
     const isGeneratingRef = useRef(false);
 
@@ -26,21 +36,24 @@ function App() {
     }, [isGenerating]);
 
     useEffect(() => {
-        const ws = new WebSocket('ws://discovery-ai-backend:3000/ws');
+        const ws = new WebSocket("/ws");
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.id && data.url) {
+                    data.url = data.url.replace(import.meta.env.VITE_COMFYUI_IMAGE_URL, `${window.location.origin}/comfyui`);
                     setImages(prev =>
                         prev.map(item =>
                             item.id === data.id
-                                ? { ...item, status: 'completed', url: data.url }
+                                ? { ...item, status: "completed", url: data.url }
                                 : item
                         )
                     );
                 }
+
+                console.log(data);
             } catch (err) {
-                console.error('WebSocket error', err);
+                console.error("WebSocket error", err);
             }
         };
         return () => ws.close();
@@ -52,13 +65,13 @@ function App() {
         setIsGenerating(true);
         try {
             const formData = new FormData();
-            formData.append('positivePrompt', prompt);
-            formData.append('height', "512");
-            formData.append('width', "512");
-            formData.append('nsfwEnabled', String(!isSafe));
+            formData.append("positivePrompt", prompt);
+            formData.append("height", String(height));
+            formData.append("width", String(width));
+            formData.append("safeMode", String(isSafe));
 
-            const response = await fetch('/api/generate', {
-                method: 'POST',
+            const response = await fetch("/api/generate", {
+                method: "POST",
                 body: formData,
             });
             const result = await response.json();
@@ -66,11 +79,11 @@ function App() {
 
             setImages(prev => [...prev, { id, status, ratio, url: undefined }]);
         } catch (error) {
-            console.error('Generation error', error);
+            console.error("Generation error", error);
         } finally {
             setIsGenerating(false);
         }
-    }, [prompt, ratio, isSafe]);
+    }, [prompt, ratio, width, height, isSafe]);
 
     const handleGenerateClick = useCallback(() => {
         setImages([]);
@@ -99,11 +112,19 @@ function App() {
                     generateOne();
                 }
             },
-            { rootMargin: '100px', threshold: 0.1 }
+            { rootMargin: "100px", threshold: 0.1 }
         );
         observer.observe(observerRef.current);
         return () => observer.disconnect();
     }, [generateOne, autoLoadEnabled, prompt, images.length]);
+
+    const handleImageClick = useCallback((imageUrl: string) => {
+        setSelectedImageUrl(imageUrl);
+    }, []);
+
+    const handleCloseModal = useCallback(() => {
+        setSelectedImageUrl(null);
+    }, []);
 
     return (
         <div className="app">
@@ -111,7 +132,7 @@ function App() {
                 prompt={prompt}
                 onPromptChange={setPrompt}
                 ratio={ratio}
-                onRatioChange={setRatio}
+                onRatioChange={onRatioChange}
                 isSafe={isSafe}
                 onSafeToggle={() => setIsSafe(prev => !prev)}
                 onGenerate={handleGenerateClick}
@@ -126,11 +147,20 @@ function App() {
                             ratio={item.ratio}
                             status={item.status}
                             imageUrl={item.url}
+                            onClick={handleImageClick}
                         />
                     ))}
                 </div>
                 <div ref={observerRef} className="scroll-trigger" />
             </main>
+
+            {selectedImageUrl && (
+                <ImageModal
+                    imageUrl={selectedImageUrl}
+                    alt="Generated image"
+                    onClose={handleCloseModal}
+                />
+            )}
         </div>
     );
 }

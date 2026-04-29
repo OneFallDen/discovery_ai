@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import Header from "./Header";
 import SafeModeSwitch from "./SafeModeSwitch";
 import RatioSelector from "./RatioSelector";
@@ -7,7 +7,7 @@ interface ControlsPanelProps {
   prompt: string;
   onPromptChange: (value: string) => void;
   ratio: number;
-  onRatioChange: (ratio: number) => void;
+  onRatioChange: (ratio: number, width: number, height: number) => void;
   isSafe: boolean;
   onSafeToggle: () => void;
   onGenerate: () => void;

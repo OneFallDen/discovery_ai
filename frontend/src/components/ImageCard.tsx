@@ -1,14 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface ImageCardProps {
     id: string;
     ratio: number;
     status: 'pending' | 'completed';
     imageUrl?: string;
+    onClick?: (imageUrl: string) => void;
 }
 
-function ImageCard({ id, ratio, status, imageUrl }: ImageCardProps) {
+function ImageCard({ id, ratio, status, imageUrl, onClick }: ImageCardProps) {
     const [imgLoaded, setImgLoaded] = useState(false);
+
+    const handleClick = () => {
+        if (status === 'completed' && imageUrl && onClick) {
+            onClick(imageUrl);
+        }
+    };
 
     if (status === 'pending') {
         return (
@@ -21,7 +28,7 @@ function ImageCard({ id, ratio, status, imageUrl }: ImageCardProps) {
     }
 
     return (
-        <div className="card" style={{ aspectRatio: `${ratio}` }}>
+        <div className="card" style={{ aspectRatio: `${ratio}` }} onClick={handleClick} role="button" tabIndex={0}>
             <div className="card-image" style={{ aspectRatio: `${ratio}` }}>
                 {!imgLoaded && (
                     <div className="skeleton" style={{ height: `calc(250px / ${ratio})` }} />
