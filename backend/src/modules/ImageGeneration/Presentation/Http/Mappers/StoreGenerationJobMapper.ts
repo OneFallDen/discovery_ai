@@ -12,9 +12,11 @@ export class StoreGenerationJobMapper {
     }
 
     public map(request: Request): DTO {
+        const isSafeMode = request.safeMode === "true";
+
         return {
             positivePrompt: request.positivePrompt,
-            negativePrompt: !request.safeMode
+            negativePrompt: !isSafeMode
                 ? request.negativePrompt
                     ? request.negativePrompt
                     : null
@@ -28,7 +30,7 @@ export class StoreGenerationJobMapper {
             cfg: request.cfg
                 ? request.cfg
                 : this.config.get<string>("DEFAULT_GENERATION_CFG"),
-            nsfwEnabled: !request.safeMode,
+            nsfwEnabled: !isSafeMode,
             model: request.model
                 ? request.model
                 : this.config.get<string>("DEFAULT_GENERATION_MODEL"),
