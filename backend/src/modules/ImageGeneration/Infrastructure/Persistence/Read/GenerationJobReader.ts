@@ -17,6 +17,7 @@ export class GenerationJobReader implements IGenerationJobReader {
     public async get(id: string): Promise<GenerationJobReadModel> {
         const model = await this.repository
             .createQueryBuilder("generation_jobs")
+            .leftJoinAndSelect("generation_jobs.images", "images")
             .where({ id: id })
             .getOne();
 
@@ -28,14 +29,46 @@ export class GenerationJobReader implements IGenerationJobReader {
             id: model.id,
             status: model.status.toString(),
             createdAt: model.createdAt,
-            images: model.images.map((image) => {
-                return {
-                    id: image.id,
-                    filename: image.filename,
-                    url: image.url,
-                    metadata: image.metadata,
-                } as GeneratedImageReadModel;
-            }),
+            images: model.images
+                ? model.images.map((image) => {
+                      return {
+                          id: image.id,
+                          filename: image.filename,
+                          url: image.url,
+                          metadata: image.metadata,
+                      } as GeneratedImageReadModel;
+                  })
+                : [],
+        } as GenerationJobReadModel;
+    }
+
+    public async getByPromptId(
+        promptId: string,
+    ): Promise<GenerationJobReadModel> {
+        const model = await this.repository
+            .createQueryBuilder("generation_jobs")
+            .leftJoinAndSelect("generation_jobs.images", "images")
+            .where({ comfyPromptId: promptId })
+            .getOne();
+
+        if (!model) {
+            throw new GenerationJobNotFoundException();
+        }
+
+        return {
+            id: model.id,
+            status: model.status.toString(),
+            createdAt: model.createdAt,
+            images: model.images
+                ? model.images.map((image) => {
+                      return {
+                          id: image.id,
+                          filename: image.filename,
+                          url: image.url,
+                          metadata: image.metadata,
+                      } as GeneratedImageReadModel;
+                  })
+                : [],
         } as GenerationJobReadModel;
     }
 

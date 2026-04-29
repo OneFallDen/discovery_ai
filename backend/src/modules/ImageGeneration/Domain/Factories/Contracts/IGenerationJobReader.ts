@@ -3,6 +3,7 @@ import { GenerationJobReadModel } from "../../../Application/Model/GenerationJob
 export interface IGenerationJobReader {
     get(id: string): Promise<GenerationJobReadModel>;
     last(): Promise<GenerationJobReadModel>;
+    getByPromptId(promptId: string): Promise<GenerationJobReadModel>;
 }
 
 export const GENERATION_JOB_READER = Symbol("IGenerationJobReader");

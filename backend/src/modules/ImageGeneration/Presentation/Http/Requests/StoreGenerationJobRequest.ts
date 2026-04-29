@@ -8,7 +8,7 @@ export class StoreGenerationJobRequest {
         public readonly height: number,
         public readonly steps: number,
         public readonly cfg: number,
-        public readonly nsfwEnabled: boolean,
+        public readonly safeMode: string,
         public readonly model?: string,
         public readonly sampler?: string,
         public readonly scheduler?: string,
