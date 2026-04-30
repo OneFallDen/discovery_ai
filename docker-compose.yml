@@ -59,19 +59,16 @@ services:
 
   discovery-ai-comfyui:
     container_name: discovery-ai-comfyui
-    image: ghcr.io/clsferguson/comfyui-docker:latest
+    image: ghcr.io/clsferguson/comfyui-docker:v0.18.1
+    privileged: true
     ports:
       - ${COMFYUI_PORT:-8188}:8188
     volumes:
       - ./comfyui/workspace:/workspace:rshared
+      - ./comfyui/extra_model_paths.yaml:/app/ComfyUI/extra_model_paths.yaml:ro
     environment:
       - CLI_ARGS=--listen 0.0.0.0
       - COMFY_AUTO_INSTALL=1
-      - PUID=0
-      - PGID=0
-    entrypoint: ""
-    command: >
-      python /workspace/ComfyUI/main.py --listen 0.0.0.0 --port 8188
     deploy:
       resources:
         reservations:
