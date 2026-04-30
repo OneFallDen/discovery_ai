@@ -1,5 +1,6 @@
 services:
   discovery-ai-nginx:
+    container_name: discovery-ai-nginx
     build:
       context: .
       dockerfile: .docker/frontend/Dockerfile
