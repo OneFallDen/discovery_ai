@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   const proxy = JSON.parse(fs.readFileSync("./package.json", "utf8"))?.proxy;
 
   const proxyUrl = env.proxy || proxy || DEFAULT_API_PROXY_URL;
-  const comfyUiProxyUrl = env.comfyUiProxyUrl | DEFAULT_COMFY_PROXY_URL
+  const comfyUiProxyUrl = env.comfyUiProxyUrl || DEFAULT_COMFY_PROXY_URL
   
   return {
     envDir: '../',
