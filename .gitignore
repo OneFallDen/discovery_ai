@@ -29,6 +29,7 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
+.zed
 
 # IDE - VSCode
 .vscode/*
@@ -65,3 +66,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /comfyui/workspace/environments/
 /comfyui/workspace/home/
 /comfyui/workspace/storage
+
+# Agent artifact
+docs/superpowers/*
