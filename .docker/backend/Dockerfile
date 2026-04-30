@@ -25,6 +25,7 @@ WORKDIR /app
 
 # Copy built dist and self-contained node_modules from deploy output
 COPY --from=builder /app/backend/dist ./dist
+COPY --from=builder /app/backend/workflows ./workflows
 COPY --from=builder /app/deploy/node_modules ./node_modules
 
 EXPOSE 3000
