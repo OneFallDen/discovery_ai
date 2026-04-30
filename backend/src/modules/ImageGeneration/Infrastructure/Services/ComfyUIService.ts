@@ -1,10 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { IComfyUIService } from "../../Domain/Services/Contracts/IComfyUIService";
 import { ComfyUIImageDTO } from "../DTO/ComfyUIImageDTO";
 
 @Injectable()
 export class ComfyUIService implements IComfyUIService {
+    private readonly logger = new Logger(ComfyUIService.name);
+
     private readonly baseUrl: string;
     private readonly clientId: string;
 
@@ -27,7 +29,11 @@ export class ComfyUIService implements IComfyUIService {
             }),
         });
 
-        if (!response.ok) throw new Error("ComfyUI error");
+        if (!response.ok) {
+            const body = await response.text();
+            this.logger.error(`ComfyUI error ${response.status}: ${body}`);
+            throw new Error(`ComfyUI error ${response.status}: ${body}`);
+        }
         const { prompt_id } = await response.json();
         return prompt_id;
     }
@@ -74,7 +80,9 @@ export class ComfyUIService implements IComfyUIService {
         }
 
         if (allImages.length === 0) {
-            console.warn(`No images found in outputs for prompt ${promptId}`);
+            this.logger.warn(
+                `No images found in outputs for prompt ${promptId}`,
+            );
         }
 
         return allImages;
