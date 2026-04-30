@@ -1,8 +1,9 @@
-FROM oven/bun:1.3.13-debian
+FROM node:22-bookworm-slim
 
 WORKDIR /workspaces/discovery_ai
 
-RUN bun install -g pnpm
+# Install bun
+RUN npm install -g bun@1.3.13 pnpm
 
 # Keep container running for devcontainer
 CMD ["sleep", "infinity"]
