@@ -95,7 +95,10 @@ export class StoreGenerationJobCommandHandler extends CommandHandler {
         }
 
         if (wf["4"]?.inputs) {
-            wf["4"].inputs.ckpt_name = `${params.model}.safetensors`;
+            const modelName = params.model ?? "";
+            wf["4"].inputs.ckpt_name = modelName.endsWith(".safetensors")
+                ? modelName
+                : `${modelName}.safetensors`;
         }
 
         if (wf["5"]?.inputs) {
