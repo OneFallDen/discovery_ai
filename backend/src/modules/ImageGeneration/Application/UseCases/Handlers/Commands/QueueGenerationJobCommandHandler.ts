@@ -5,7 +5,7 @@ import {
     GENERATION_JOB_REPOSITORY,
     type IGenerationJobRepository,
 } from "../../../../Domain/Factories/Contracts/IGenerationJobRepository";
-import { GenerationJob as Aggregate } from "../../../../Domain/Model/Aggregates/GeneratoinJob";
+import { GenerationJob as Aggregate } from "../../../../Domain/Model/Aggregates/GenerationJob";
 import {
     COMFYUI_SERVICE,
     type IComfyUIService,
@@ -42,6 +42,8 @@ export class QueueGenerationJobCommandHandler extends CommandHandler {
             aggregate.queued(promptId);
 
             aggregate.commit();
+
+            await this.repository.queue(aggregate);
         } catch (e) {
             console.error(e);
         }

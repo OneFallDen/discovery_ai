@@ -19,7 +19,7 @@ export class GenerationJob extends AggregateRoot {
         private readonly workflow: Workflow,
         private readonly createdAt: Date,
         private comfyPromptId: string | null = null,
-        private readonly errorMessage: string | null = null,
+        private errorMessage: string | null = null,
         private images: GeneratedImage[] = [],
         private updatedAt: Date | null = null,
         private completedAt: Date | null = null,
@@ -120,6 +120,10 @@ export class GenerationJob extends AggregateRoot {
 
     public queued(comfyPromptId: string): void {
         this.queue();
+
+        this.status = JobStatus.Queued;
+        this.comfyPromptId = comfyPromptId;
+
         this.apply(new GenerationJobQueuedEvent(this.id, comfyPromptId));
     }
 
@@ -133,7 +137,6 @@ export class GenerationJob extends AggregateRoot {
         }
 
         this.status = JobStatus.Ready;
-
         this.images = images;
 
         this.apply(new GenerationJobCompletedEvent(this.id, this.images));
@@ -143,6 +146,9 @@ export class GenerationJob extends AggregateRoot {
         if (this.status === JobStatus.Ready) {
             throw new GenerationJobAlreadyCompletedException();
         }
+
+        this.status = JobStatus.Error;
+        this.errorMessage = error;
 
         this.apply(new GenerationJobFailedEvent(this.id, error));
     }

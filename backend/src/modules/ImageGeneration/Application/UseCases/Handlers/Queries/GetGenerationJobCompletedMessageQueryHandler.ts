@@ -6,7 +6,6 @@ import {
     GENERATION_JOB_READER,
     type IGenerationJobReader,
 } from "../../../../Domain/Factories/Contracts/IGenerationJobReader";
-import { GenerationJobReadModel } from "../../../Model/GenerationJobReadModel";
 
 @Injectable()
 export class GetGenerationJobCompletedMessageQueryHandler extends QueryHandler {
@@ -18,18 +17,7 @@ export class GetGenerationJobCompletedMessageQueryHandler extends QueryHandler {
     }
 
     public async handle(query: Query): Promise<Message> {
-        let model: GenerationJobReadModel | null = null;
-        let attempts = 0;
-        const maxAttempts = 50;
-
-        while (attempts < maxAttempts) {
-            model = await this.reader.getByPromptId(query.dto.promptId);
-            if (model.images && model.images.length > 0) {
-                break;
-            }
-            await new Promise((resolve) => setTimeout(resolve, 100));
-            attempts++;
-        }
+        const model = await this.reader.getByPromptId(query.dto.promptId);
 
         if (!model || model.images.length === 0) {
             throw new Error("Images not found after completion");

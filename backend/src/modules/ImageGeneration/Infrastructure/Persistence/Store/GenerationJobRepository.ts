@@ -1,7 +1,7 @@
 import { GenerationJobOrmEntity } from "../Entity/TypeORM/GenerationJobOrmEntity";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import { GenerationJob as Aggregate } from "../../../Domain/Model/Aggregates/GeneratoinJob";
+import { GenerationJob as Aggregate } from "../../../Domain/Model/Aggregates/GenerationJob";
 import { Injectable } from "@nestjs/common";
 import { IGenerationJobRepository } from "../../../Domain/Factories/Contracts/IGenerationJobRepository";
 import { GenerationJobNotFoundException } from "../../Exceptions/GenerationJobNotFoundException";
@@ -42,49 +42,49 @@ export class GenerationJobRepository implements IGenerationJobRepository {
         return await this.reconstituteFromOrm(model);
     }
 
-    public async queue(id: string, comfyUiId: string): Promise<void> {
+    public async queue(aggregate: Aggregate): Promise<void> {
         const model = await this.repository
             .createQueryBuilder("generation_jobs")
-            .where({ id: id })
+            .where({ id: aggregate.getId().value() })
             .getOne();
 
         if (!model) {
             throw new GenerationJobNotFoundException();
         }
 
-        model.status = JobStatus.Queued;
-        model.comfyPromptId = comfyUiId;
+        model.status = aggregate.getStatus();
+        model.comfyPromptId = aggregate.getComfyPromptId();
 
         await this.repository.save(model);
     }
 
-    public async fail(id: string, error: string): Promise<void> {
+    public async fail(aggregate: Aggregate): Promise<void> {
         const model = await this.repository
             .createQueryBuilder("generation_jobs")
-            .where({ id: id })
+            .where({ id: aggregate.getId().value() })
             .getOne();
 
         if (!model) {
             throw new GenerationJobNotFoundException();
         }
 
-        model.status = JobStatus.Error;
-        model.errorMessage = error;
+        model.status = aggregate.getStatus();
+        model.errorMessage = aggregate.getErrorMessage();
 
         await this.repository.save(model);
     }
 
-    public async complete(id: string, images: GeneratedImage[]): Promise<void> {
+    public async complete(aggregate: Aggregate): Promise<void> {
         const model = await this.repository
             .createQueryBuilder("generation_jobs")
-            .where({ id: id })
+            .where({ id: aggregate.getId().value() })
             .getOne();
 
         if (!model) {
             throw new GenerationJobNotFoundException();
         }
 
-        const imagesOrmEntities = images.map((image) => {
+        const imagesOrmEntities = aggregate.getImages().map((image) => {
             const ormEntity = new GeneratedImageOrmEntity();
 
             ormEntity.jobId = image.getJobId().value();
