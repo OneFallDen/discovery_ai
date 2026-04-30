@@ -5,7 +5,7 @@ import {
     type IGenerationJobRepository,
 } from "../../../../Domain/Factories/Contracts/IGenerationJobRepository";
 import { FailGenerationJobCommand as Command } from "../../../Input/Commands/FailGenerationJobCommand";
-import { GenerationJob as Aggregate } from "../../../../Domain/Model/Aggregates/GeneratoinJob";
+import { GenerationJob as Aggregate } from "../../../../Domain/Model/Aggregates/GenerationJob";
 import { EventPublisher } from "@nestjs/cqrs";
 
 @Injectable()
@@ -22,8 +22,11 @@ export class FailGenerationJobCommandHandler extends CommandHandler {
         let aggregate: Aggregate = await this.repository.findByPromptId(
             command.dto.promptId,
         );
+
         aggregate = this.publisher.mergeObjectContext(aggregate);
         aggregate.fail(command.dto.error);
         aggregate.commit();
+
+        await this.repository.fail(aggregate);
     }
 }

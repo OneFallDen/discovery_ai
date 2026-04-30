@@ -1,7 +1,7 @@
 import { CommandHandler } from "../../../../../Common/Application/Handlers/CommandHandler";
 import { Inject, Injectable } from "@nestjs/common";
 import { StoreGenerationJobCommand as Command } from "../../../Input/Commands/StoreGenerationJobCommand";
-import { GenerationJob as Aggregate } from "../../../../Domain/Model/Aggregates/GeneratoinJob";
+import { GenerationJob as Aggregate } from "../../../../Domain/Model/Aggregates/GenerationJob";
 import {
     type IUuidService,
     UUID_SERVICE,
