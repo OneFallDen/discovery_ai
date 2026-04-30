@@ -4,19 +4,20 @@ import {
     Column,
     ManyToOne,
     JoinColumn,
+    type Relation,
 } from "typeorm";
-import { GenerationJobOrmEntity } from "./GenerationJobOrmEntity";
+import type { GenerationJobOrmEntity } from "./GenerationJobOrmEntity";
 
 @Entity("generated_images")
 export class GeneratedImageOrmEntity {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
-    @ManyToOne(() => GenerationJobOrmEntity, (job) => job.images, {
+    @ManyToOne("GenerationJobOrmEntity", {
         onDelete: "CASCADE",
     })
     @JoinColumn({ name: "job_id" })
-    job: GenerationJobOrmEntity;
+    job: Relation<GenerationJobOrmEntity>;
 
     @Column()
     jobId: string;
