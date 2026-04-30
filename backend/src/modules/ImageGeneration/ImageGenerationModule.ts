@@ -54,7 +54,7 @@ import { QueryBus } from "../Common/Infrastructure/Bus/QueryBus";
 import { GetLastGenerationJobQuery } from "./Application/Input/Queries/GetLastGenerationJobQuery";
 import { GetLastGenerationJobMapper } from "./Application/Mappers/GetLastGenerationJobMapper";
 import { CqrsModule } from "@nestjs/cqrs";
-import { GenerationJobQueuedHandler } from "./Application/EventHandlers/GeneratoinJobQueuedHandler";
+import { GenerationJobQueuedHandler } from "./Application/EventHandlers/GenerationJobQueuedHandler";
 import { GenerationJobFailedHandler } from "./Application/EventHandlers/GenerationJobFailedHandler";
 import { GenerationJobCompletedHandler } from "./Application/EventHandlers/GenerationJobCompletedHandler";
 import { ImageEventsGateway } from "./Presentation/Http/WebSocket/ImageEventsGateway";
