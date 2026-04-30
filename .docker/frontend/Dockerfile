@@ -3,7 +3,7 @@ FROM oven/bun:1.3.13-alpine AS builder
 WORKDIR /app
 
 # Copy workspace config for pnpm
-COPY pnpm-workspace.yaml package.json ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 
