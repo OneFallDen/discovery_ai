@@ -1,0 +1,8 @@
+{
+  "name": "discovery-ai",
+  "private": true,
+  "scripts": {
+    "backend": "pnpm --filter backend dev",
+    "frontend": "pnpm --filter frontend dev"
+  }
+}
