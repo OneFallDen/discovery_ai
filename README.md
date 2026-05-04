@@ -37,6 +37,8 @@ The backend follows **Domain-Driven Design** with a clean layered structure:
 |AI Engine|ComfyUI (local, GPU)|
 |Frontend|React + Vite + TypeScript|
 |Infrastructure|Docker Compose, Nginx|
+|Runtime|Bun 1.3.13|
+|Package Manager|pnpm (monorepo)|
 
 ## Features
 
@@ -59,12 +61,7 @@ The backend follows **Domain-Driven Design** with a clean layered structure:
 ```bash
 git clone <repo-url>
 cd discovery_ai
-cp .env.example .env # fill in your values
-cd backend
-cp .env.example .env # fill in your values
-cd ../frontend
-cp .env.example .env # fill in your values
-cd ..
+cp .env.example .env  # fill in your values
 docker compose up --build
 ```
 
@@ -77,6 +74,14 @@ On your local network: http://<host-ip>:8081
 Important: After the build completes, place your model checkpoint files (.safetensors) into the following directory:
 /comfyui/workspace/ComfyUI/models/checkpoints
 This directory is mounted into the ComfyUI container and is where the platform expects to find the models.
+
+### Local Development (without Docker)
+
+```bash
+pnpm install
+pnpm backend   # starts NestJS via bun, reads .env from root
+pnpm frontend  # starts Vite dev server, reads .env from root
+```
 
 ### Environment Variables
 

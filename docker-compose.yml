@@ -1,11 +1,13 @@
 services:
   discovery-ai-nginx:
+    container_name: discovery-ai-nginx
     build:
-      context: .docker/nginx
+      context: .
+      dockerfile: .docker/frontend/Dockerfile
+      args:
+        VITE_COMFYUI_IMAGE_URL: ${VITE_COMFYUI_IMAGE_URL}
     ports:
       - ${PROXY_PORT:-8081}:8081
-    volumes:
-      - "./backend:/var/www/html"
     depends_on:
       - discovery-ai-backend
     networks:
@@ -14,29 +16,15 @@ services:
   discovery-ai-backend:
     container_name: discovery-ai-backend
     build:
-      context: ./backend
-      dockerfile: ../.docker/backend/Dockerfile
+      context: .
+      dockerfile: .docker/backend/Dockerfile
     ports:
       - ${BACKEND_PORT:-3000}:3000
-    volumes:
-      - "./backend:/app"
+    env_file:
+      - .env
     depends_on:
       - discovery-ai-postgres
-    networks:
-      - discovery-ai-network
-
-  discovery-ai-frontend:
-    container_name: discovery-ai-frontend
-    build:
-      context: ./frontend
-      dockerfile: ../.docker/frontend/Dockerfile
-    ports:
-      - ${FRONTEND_PORT:-5173}:5173
-    depends_on:
-      - discovery-ai-backend
-    volumes:
-      - "./frontend:/app"
-      - "/app/node_modules"
+      - discovery-ai-redis
     networks:
       - discovery-ai-network
 
@@ -72,19 +60,16 @@ services:
 
   discovery-ai-comfyui:
     container_name: discovery-ai-comfyui
-    image: ghcr.io/clsferguson/comfyui-docker:latest
+    image: ghcr.io/clsferguson/comfyui-docker:v0.18.1
+    privileged: true
     ports:
       - ${COMFYUI_PORT:-8188}:8188
     volumes:
       - ./comfyui/workspace:/workspace:rshared
+      - ./comfyui/extra_model_paths.yaml:/app/ComfyUI/extra_model_paths.yaml:ro
     environment:
       - CLI_ARGS=--listen 0.0.0.0
       - COMFY_AUTO_INSTALL=1
-      - PUID=0
-      - PGID=0
-    entrypoint: ""
-    command: >
-      python /workspace/ComfyUI/main.py --listen 0.0.0.0 --port 8188
     deploy:
       resources:
         reservations:
