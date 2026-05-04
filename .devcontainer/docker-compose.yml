@@ -1,0 +1,88 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: .devcontainer/backend/Dockerfile
+    volumes:
+      - ..:/workspaces/discovery_ai:cached
+    env_file:
+      - ../.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - devcontainer-network
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: .devcontainer/frontend/Dockerfile
+    volumes:
+      - ..:/workspaces/discovery_ai:cached
+    env_file:
+      - ../.env
+    ports:
+      - "5173:5173"
+    networks:
+      - devcontainer-network
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - devcontainer-network
+
+  redis:
+    build:
+      context: ../.docker/redis
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - devcontainer-network
+
+  comfyui:
+    image: ghcr.io/clsferguson/comfyui-docker:v0.18.1
+    profiles:
+      - gpu
+    privileged: true
+    ports:
+      - "8188:8188"
+    volumes:
+      - ../comfyui/workspace:/workspace:rshared
+      - ../comfyui/extra_model_paths.yaml:/app/ComfyUI/extra_model_paths.yaml:ro
+    environment:
+      - CLI_ARGS=--listen 0.0.0.0
+      - COMFY_AUTO_INSTALL=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    networks:
+      - devcontainer-network
+
+networks:
+  devcontainer-network:
+
+volumes:
+  pgdata:
+  redisdata:
