@@ -19,10 +19,11 @@ export class GenerationJobRepository implements IGenerationJobRepository {
         private readonly repository: Repository<GenerationJobOrmEntity>,
     ) {}
 
-    public async store(aggregate: Aggregate): Promise<void> {
+    public async store(aggregate: Aggregate, sessionId: string): Promise<void> {
         const model = new GenerationJobOrmEntity();
 
         model.id = aggregate.getId().value();
+        model.sessionId = sessionId;
         model.status = aggregate.getStatus();
         model.params = aggregate.getParams().toJson();
         model.workflowJson = JSON.parse(aggregate.getWorkflow().value());

@@ -2,7 +2,7 @@ import { GenerationJob as Aggregate } from "../../Model/Aggregates/GenerationJob
 import { GeneratedImage } from "../../Model/Entities/GeneratedImage";
 
 export interface IGenerationJobRepository {
-    store(aggregate: Aggregate): Promise<void>;
+    store(aggregate: Aggregate, sessionId: string): Promise<void>;
     find(id: string): Promise<Aggregate>;
     queue(aggregate: Aggregate): Promise<void>;
     fail(aggregate: Aggregate): Promise<void>;

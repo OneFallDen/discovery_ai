@@ -2,21 +2,17 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { IComfyUIService } from "../../Domain/Services/Contracts/IComfyUIService";
 import { ComfyUIImageDTO } from "../DTO/ComfyUIImageDTO";
+import { ComfyUIClientId } from "./ComfyUIClientId";
 
 @Injectable()
 export class ComfyUIService implements IComfyUIService {
     private readonly logger = new Logger(ComfyUIService.name);
 
     private readonly baseUrl: string;
-    private readonly clientId: string;
-
-    constructor(private readonly config: ConfigService) {
+    constructor(private readonly config: ConfigService, private readonly clientId: ComfyUIClientId) {
         this.baseUrl =
             this.config.get<string>("DEFAULT_COMFYUI_URL") ||
             "http://127.0.0.1:8188";
-        this.clientId =
-            this.config.get<string>("DEFAULT_COMFYUI_CLIENT_ID") ||
-            crypto.randomUUID();
     }
 
     public async queuePrompt(workflow: string): Promise<string> {
@@ -25,7 +21,7 @@ export class ComfyUIService implements IComfyUIService {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 prompt: JSON.parse(workflow),
-                client_id: this.clientId,
+                client_id: this.clientId.value,
             }),
         });
 
@@ -41,7 +37,7 @@ export class ComfyUIService implements IComfyUIService {
     public async getGeneratedImages(
         promptId: string,
     ): Promise<ComfyUIImageDTO[]> {
-        const response = await fetch(`${this.baseUrl}/history/${promptId}`);
+        const response = await fetch(`${this.baseUrl}/history/${encodeURIComponent(promptId)}`);
 
         if (!response.ok) {
             throw new Error(
@@ -86,6 +82,17 @@ export class ComfyUIService implements IComfyUIService {
         }
 
         return allImages;
+    }
+
+    public async getPromptOutcome(promptId: string): Promise<"pending" | "success" | { error: string }> {
+        const response = await fetch(`${this.baseUrl}/history/${encodeURIComponent(promptId)}`);
+        if (!response.ok) throw new Error(`ComfyUI history error ${response.status}`);
+        const history = await response.json();
+        const job = history[promptId];
+        if (!job?.status?.completed) return "pending";
+        if (job.status.status_str === "success") return "success";
+        const failure = job.status.messages?.find((entry: unknown[]) => entry[0] === "execution_error");
+        return { error: failure?.[1]?.exception_message ?? "ComfyUI execution failed" };
     }
 
     private getImageUrl(

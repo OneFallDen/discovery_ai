@@ -32,20 +32,15 @@ export class QueueGenerationJobCommandHandler extends CommandHandler {
         const aggregate: Aggregate =
             this.publisher.mergeObjectContext(loadedAggregate);
 
-        try {
-            aggregate.queue();
+        aggregate.queue();
 
-            const promptId = await this.comfyUIService.queuePrompt(
-                aggregate.getWorkflow().value(),
-            );
+        const promptId = await this.comfyUIService.queuePrompt(
+            aggregate.getWorkflow().value(),
+        );
 
-            aggregate.queued(promptId);
+        aggregate.queued(promptId);
 
-            aggregate.commit();
-
-            await this.repository.queue(aggregate);
-        } catch (e) {
-            console.error(e);
-        }
+        await this.repository.queue(aggregate);
+        aggregate.commit();
     }
 }

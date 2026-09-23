@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test": "tsc --noEmit --incremental false -p tsconfig.test.json && node --experimental-strip-types --test src/api/generationSocket.test.ts",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

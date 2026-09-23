@@ -4,7 +4,7 @@ import { StoreGenerationJobCommand as Command } from "../Input/Commands/StoreGen
 
 @Injectable()
 export class StoreGenerationJobCommandMapper {
-    public map(dto: DTO): Command {
-        return new Command(dto);
+    public map(dto: DTO, sessionId: string): Command {
+        return new Command(dto, sessionId);
     }
 }

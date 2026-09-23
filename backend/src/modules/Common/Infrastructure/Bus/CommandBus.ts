@@ -13,9 +13,9 @@ export class CommandBus {
         this.handlers.set(command.name, handler);
     }
 
-    async execute(command: Command): Promise<void> {
+    async execute<TResult = void>(command: Command): Promise<TResult> {
         const handler = this.handlers.get(command.constructor.name);
         if (!handler) throw new Error("Handler not found");
-        await handler.execute(command);
+        return await handler.execute(command);
     }
 }

@@ -18,6 +18,10 @@ export class GenerationJobOrmEntity {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
+    @Index()
+    @Column({ type: "uuid", nullable: true })
+    sessionId: string | null;
+
     // @Column({ type: "uuid", nullable: true }) // TODO: uncomment on auth complete
     // userId: string | null;
 

@@ -384,3 +384,20 @@ main {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0,0,0,0.4);
 }
+
+.card-error {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    color: #ff8d94;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.card-error span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+}

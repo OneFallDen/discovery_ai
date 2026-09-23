@@ -31,8 +31,6 @@ import { GenerationJobFailedCommand } from "./Application/Input/Commands/Generat
 import { GenerationJobQueuedCommand } from "./Application/Input/Commands/GenerationJobQueuedCommand";
 import { GenerationJobFailedMapper } from "./Application/Mappers/GenerationJobFailedMapper";
 import { GenerationJobQueuedMapper } from "./Application/Mappers/GenerationJobQueuedMapper";
-import { ConfigService } from "@nestjs/config";
-import WebSocket from "ws";
 import { GenerationJobCompletedCommandHandler } from "./Application/UseCases/Handlers/Commands/GenerationJobCompletedCommandHandler";
 import { GenerationJobCompletedUseCase } from "./Application/UseCases/GenerationJobCompletedUseCase";
 import { GenerationJobCompletedCommand } from "./Application/Input/Commands/GenerationJobCompletedCommand";
@@ -41,12 +39,10 @@ import { CompleteGenerationJobUseCase } from "./Application/UseCases/CompleteGen
 import { CompleteGenerationJobCommand } from "./Application/Input/Commands/CompleteGenerationJobCommand";
 import { CompleteGenerationJobCommandHandler } from "./Application/UseCases/Handlers/Commands/CompleteGenerationJobCommandHandler";
 import { CompleteGenerationJobMapper } from "./Application/Mappers/CompleteGenerationJobMapper";
-import { CompleteGenerationJobDTO } from "./Application/DTO/CompleteGenerationJobDTO";
 import { FailGenerationJobMapper } from "./Application/Mappers/FailGenerationJobMapper";
 import { FailGenerationJobCommandHandler } from "./Application/UseCases/Handlers/Commands/FailGenerationJobCommandHandler";
 import { FailGenerationJobUseCase } from "./Application/UseCases/FailGenerationJobUseCase";
 import { FailGenerationJobCommand } from "./Application/Input/Commands/FailGenerationJobCommand";
-import { FailGenerationJobDTO } from "./Application/DTO/FailGenerationJobDTO";
 import { GENERATION_JOB_READER } from "./Domain/Factories/Contracts/IGenerationJobReader";
 import { GenerationJobReader } from "./Infrastructure/Persistence/Read/GenerationJobReader";
 import { GetLastGenerationJobQueryHandler } from "./Application/UseCases/Handlers/Queries/GetLastGenerationJobQueryHandler";
@@ -61,6 +57,10 @@ import { ImageEventsGateway } from "./Presentation/Http/WebSocket/ImageEventsGat
 import { GetGenerationJobCompletedMessageQueryHandler } from "./Application/UseCases/Handlers/Queries/GetGenerationJobCompletedMessageQueryHandler";
 import { GetGenerationJobCompletedMessageQuery } from "./Application/Input/Queries/GetGenerationJobCompletedMessageQuery";
 import { GetGenerationJobCompletedMessageMapper } from "./Application/Mappers/GetGenerationJobCompletedMessageMapper";
+import { ComfyUIClientId } from "./Infrastructure/Services/ComfyUIClientId";
+import { ComfyUIEventsListener } from "./Infrastructure/Events/ComfyUIEventsListener";
+import { GenerationSessionService } from "./Infrastructure/Services/GenerationSessionService";
+import { GenerationJobStatusReader } from "./Infrastructure/Persistence/Read/GenerationJobStatusReader";
 
 @Module({
     imports: [
@@ -123,13 +123,15 @@ import { GetGenerationJobCompletedMessageMapper } from "./Application/Mappers/Ge
         ImageEventsGateway,
         GetGenerationJobCompletedMessageQueryHandler,
         GetGenerationJobCompletedMessageMapper,
+        ComfyUIClientId,
+        ComfyUIEventsListener,
+        GenerationSessionService,
+        GenerationJobStatusReader,
     ],
     exports: [],
     controllers: [GenerationController],
 })
 export class ImageGenerationModule {
-    private ws: WebSocket;
-
     constructor(
         private readonly commandBus: CommandBus,
         private readonly queryBus: QueryBus,
@@ -142,10 +144,6 @@ export class ImageGenerationModule {
         private readonly failGenerationJobCommandHandler: FailGenerationJobCommandHandler,
         private readonly getLastGenerationJobQueryHandler: GetLastGenerationJobQueryHandler,
         private readonly getGenerationJobCompletedMessageQueryHandler: GetGenerationJobCompletedMessageQueryHandler,
-        private readonly completeGenerationJobUseCase: CompleteGenerationJobUseCase,
-        private readonly failGenerationJobUseCase: FailGenerationJobUseCase,
-        private readonly config: ConfigService,
-        private readonly imageEventsGateway: ImageEventsGateway,
     ) {}
 
     onModuleInit(): void {
@@ -177,7 +175,6 @@ export class ImageGenerationModule {
             FailGenerationJobCommand,
             this.failGenerationJobCommandHandler,
         );
-
         this.queryBus.register(
             GetLastGenerationJobQuery,
             this.getLastGenerationJobQueryHandler,
@@ -186,46 +183,5 @@ export class ImageGenerationModule {
             GetGenerationJobCompletedMessageQuery,
             this.getGenerationJobCompletedMessageQueryHandler,
         );
-
-        const base =
-            this.config.get<string>("DEFAULT_COMFYUI_WS") ||
-            "ws://127.0.0.1:8188/ws";
-        const clientId =
-            this.config.get<string>("DEFAULT_COMFYUI_CLIENT_ID") ||
-            crypto.randomUUID();
-
-        this.ws = new WebSocket(`${base}?clientId=${clientId}`);
-
-        this.ws.on("message", async (data: Buffer) => {
-            const msg = JSON.parse(data.toString());
-
-            if (
-                msg.type === "execution_success" ||
-                msg.type === "execution_error"
-            ) {
-                const promptId = msg.data.prompt_id;
-
-                if (msg.type === "execution_success") {
-                    try {
-                        const img =
-                            await this.completeGenerationJobUseCase.execute(
-                                new CompleteGenerationJobDTO(promptId),
-                            );
-                        this.imageEventsGateway.sendImageReady(img.id, img.url);
-                    } catch (e) {
-                        console.error(e);
-                    }
-                } else {
-                    const error = msg.data.exception_message;
-                    await this.failGenerationJobUseCase.execute(
-                        new FailGenerationJobDTO(promptId, error),
-                    );
-                }
-            }
-        });
-    }
-
-    onModuleDestroy() {
-        this.ws?.close();
     }
 }

@@ -19,9 +19,10 @@ import {
     GENERATION_JOB_REPOSITORY,
     type IGenerationJobRepository,
 } from "../../../../Domain/Factories/Contracts/IGenerationJobRepository";
-import { Job, Queue } from "bullmq";
+import type { Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
 import { QueueGenerationJobDTO as JobDTO } from "../../../DTO/QueueGenerationJobDTO";
+import { GenerationJobReadModel } from "../../../Model/GenerationJobReadModel";
 
 @Injectable()
 export class StoreGenerationJobCommandHandler extends CommandHandler {
@@ -38,7 +39,7 @@ export class StoreGenerationJobCommandHandler extends CommandHandler {
         super();
     }
 
-    public async execute(command: Command): Promise<void> {
+    public async execute(command: Command): Promise<GenerationJobReadModel> {
         const workflow = this.workflowService.get(
             this.config.get<string>("DEFAULT_GENERATION_WORKFLOW") ||
                 "base.json",
@@ -62,7 +63,7 @@ export class StoreGenerationJobCommandHandler extends CommandHandler {
             new Workflow(this.replaceParamsInWorkflow(workflow, command.dto)),
         );
 
-        await this.repository.store(aggregate);
+        await this.repository.store(aggregate, command.sessionId);
 
         const dto: JobDTO = new JobDTO(aggregate.getId().value());
 
@@ -70,6 +71,12 @@ export class StoreGenerationJobCommandHandler extends CommandHandler {
             attempts: 3,
             backoff: { type: "exponential", delay: 1000 },
         });
+        return new GenerationJobReadModel(
+            aggregate.getId().value(),
+            aggregate.getStatus(),
+            aggregate.getCreatedAt(),
+            [],
+        );
     }
 
     private replaceParamsInWorkflow(

@@ -3,12 +3,13 @@ import { useState } from 'react';
 interface ImageCardProps {
     id: string;
     ratio: number;
-    status: 'pending' | 'completed';
+    status: 'pending' | 'completed' | 'error';
     imageUrl?: string;
+    error?: string;
     onClick?: (imageUrl: string) => void;
 }
 
-function ImageCard({ id: _id, ratio, status, imageUrl, onClick }: ImageCardProps) {
+function ImageCard({ id: _id, ratio, status, imageUrl, error, onClick }: ImageCardProps) {
     const [imgLoaded, setImgLoaded] = useState(false);
 
     const handleClick = () => {
@@ -25,6 +26,12 @@ function ImageCard({ id: _id, ratio, status, imageUrl, onClick }: ImageCardProps
                 </div>
             </div>
         );
+    }
+
+    if (status === 'error') {
+        return <div className="card card-error" style={{ aspectRatio: `${ratio}` }} role="status" title={error}>
+            <span>{error || 'Generation failed'}</span>
+        </div>;
     }
 
     return (
