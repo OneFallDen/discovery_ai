@@ -3,35 +3,35 @@ import { useState } from 'react';
 interface ImageCardProps {
     id: string;
     ratio: number;
-    status: 'pending' | 'completed' | 'error';
+    status: 'pending' | 'queued' | 'processing' | 'ready' | 'error';
     imageUrl?: string;
     error?: string;
     onClick?: (imageUrl: string) => void;
 }
 
-function ImageCard({ id: _id, ratio, status, imageUrl, error, onClick }: ImageCardProps) {
+function ImageCard({ ratio, status, imageUrl, error, onClick }: ImageCardProps) {
     const [imgLoaded, setImgLoaded] = useState(false);
 
     const handleClick = () => {
-        if (status === 'completed' && imageUrl && onClick) {
+        if (status === 'ready' && imageUrl && onClick) {
             onClick(imageUrl);
         }
     };
 
-    if (status === 'pending') {
+    if (status !== 'ready') {
         return (
             <div className="card" style={{ aspectRatio: `${ratio}` }}>
                 <div className="card-image" style={{ aspectRatio: `${ratio}` }}>
-                    <div className="skeleton" style={{ height: `calc(250px / ${ratio})` }} />
+                    {status === 'error' ? (
+                        <div className="card-error">
+                            {error || 'Generation failed'}
+                        </div>
+                    ) : (
+                        <div className="skeleton" style={{ height: `calc(250px / ${ratio})` }} />
+                    )}
                 </div>
             </div>
         );
-    }
-
-    if (status === 'error') {
-        return <div className="card card-error" style={{ aspectRatio: `${ratio}` }} role="status" title={error}>
-            <span>{error || 'Generation failed'}</span>
-        </div>;
     }
 
     return (

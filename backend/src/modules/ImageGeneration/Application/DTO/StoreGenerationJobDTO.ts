@@ -1,8 +1,7 @@
 export class StoreGenerationJobDTO {
     constructor(
         public readonly positivePrompt: string,
-        public readonly negativePrompt?: string,
-        // @ts-ignore
+        public readonly negativePrompt: string | null,
         public readonly seed: number,
         public readonly width: number,
         public readonly height: number,

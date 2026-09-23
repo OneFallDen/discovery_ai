@@ -7,7 +7,6 @@ import { CompleteGenerationJobUseCase } from "../../Application/UseCases/Complet
 import { FailGenerationJobUseCase } from "../../Application/UseCases/FailGenerationJobUseCase";
 import { CompleteGenerationJobDTO } from "../../Application/DTO/CompleteGenerationJobDTO";
 import { FailGenerationJobDTO } from "../../Application/DTO/FailGenerationJobDTO";
-import { ImageEventsGateway } from "../../Presentation/Http/WebSocket/ImageEventsGateway";
 import { COMFYUI_SERVICE, type IComfyUIService } from "../../Domain/Services/Contracts/IComfyUIService";
 
 @Injectable()
@@ -28,7 +27,6 @@ export class ComfyUIEventsListener implements OnApplicationBootstrap, OnModuleDe
         @Inject(COMFYUI_SERVICE) private readonly comfyUI: IComfyUIService,
         private readonly complete: CompleteGenerationJobUseCase,
         private readonly fail: FailGenerationJobUseCase,
-        private readonly gateway: ImageEventsGateway,
     ) {}
 
     public onApplicationBootstrap(): void {
@@ -110,14 +108,11 @@ export class ComfyUIEventsListener implements OnApplicationBootstrap, OnModuleDe
         if (this.processing.has(promptId)) return;
         this.processing.add(promptId);
         try {
-            const jobId = await this.jobs.queuedJobIdForPrompt(promptId);
-            if (!jobId) return;
+            if (!await this.jobs.queuedJobIdForPrompt(promptId)) return;
             if (outcome === "success") {
-                const image = await this.complete.execute(new CompleteGenerationJobDTO(promptId));
-                await this.gateway.sendImageReady(jobId, image.url);
+                await this.complete.execute(new CompleteGenerationJobDTO(promptId));
             } else {
                 await this.fail.execute(new FailGenerationJobDTO(promptId, outcome.error));
-                await this.gateway.sendImageFailed(jobId, outcome.error);
             }
         } finally {
             this.processing.delete(promptId);

@@ -1,13 +1,12 @@
 import { EventsHandler, IEventHandler } from "@nestjs/cqrs";
 import { GenerationJobFailedEvent as Event } from "../../Domain/Events/GenerationJobFailedEvent";
-import { GenerationJobFailedUseCase } from "../UseCases/GenerationJobFailedUseCase";
-import { GenerationJobFailedDTO as DTO } from "../DTO/GenerationjbFailedDTO";
+import { ImageEventsGateway } from "../../Presentation/Http/WebSocket/ImageEventsGateway";
 
 @EventsHandler(Event)
 export class GenerationJobFailedHandler implements IEventHandler<Event> {
-    constructor(private readonly useCase: GenerationJobFailedUseCase) {}
+    constructor(private readonly imageEventsGateway: ImageEventsGateway) {}
 
     public async handle(event: Event): Promise<void> {
-        await this.useCase.execute(new DTO(event.id.value(), event.error));
+        await this.imageEventsGateway.sendImageFailed(event.id.value(), event.error);
     }
 }

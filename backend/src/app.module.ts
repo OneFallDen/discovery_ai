@@ -11,8 +11,6 @@ import { join } from "path";
 
 @Module({
     imports: [
-        CommonModule,
-        ImageGenerationModule,
         ConfigModule.forRoot({
             isGlobal: true,
             validationSchema: Joi.object({
@@ -26,17 +24,18 @@ import { join } from "path";
                 JWT_ACCESS_EXPIRES_IN: Joi.string().default("15m"),
                 JWT_REFRESH_EXPIRES_IN: Joi.string().default("7d"),
                 REDIS_HOST: Joi.string().required(),
-                REDIS_PORT: Joi.string().required(),
-                DEFAULT_GENERATION_STEPS: Joi.string().required(),
-                DEFAULT_GENERATION_CFG: Joi.string().required(),
+                REDIS_PORT: Joi.number().default(6379),
+                DEFAULT_GENERATION_STEPS: Joi.number().required(),
+                DEFAULT_GENERATION_CFG: Joi.number().required(),
                 DEFAULT_GENERATION_MODEL: Joi.string().required(),
                 DEFAULT_GENERATION_SAMPLER: Joi.string().required(),
                 DEFAULT_GENERATION_SCHEDULER: Joi.string().required(),
                 DEFAULT_GENERATION_WORKFLOW: Joi.string().required(),
                 DEFAULT_COMFYUI_URL: Joi.string().required(),
                 DEFAULT_COMFYUI_WS: Joi.string().required(),
-                DEFAULT_COMFYUI_CLIENT_ID: Joi.string().allow("").default(""),
+                DEFAULT_COMFYUI_CLIENT_ID: Joi.string().allow("").optional(),
                 DEFAULT_SAFE_MODE_PROMPT: Joi.string().required(),
+                TYPEORM_MIGRATIONS_RUN: Joi.boolean().default(true),
             }),
         }),
         BullModule.forRootAsync({
@@ -60,10 +59,16 @@ import { join } from "path";
                 password: configService.get("POSTGRES_PASSWORD"),
                 database: configService.get("POSTGRES_DB"),
                 entities: [join(__dirname, "..", "**", "*.entity.{ts,js}")],
-                synchronize: true, //should be false at production!
+                migrations: [join(__dirname, "migrations", "*.{ts,js}")],
+                migrationsRun:
+                    configService.get<boolean>("TYPEORM_MIGRATIONS_RUN") ??
+                    true,
+                synchronize: false,
                 autoLoadEntities: true,
             }),
         }),
+        CommonModule,
+        ImageGenerationModule,
     ],
     controllers: [AppController],
     providers: [AppService],

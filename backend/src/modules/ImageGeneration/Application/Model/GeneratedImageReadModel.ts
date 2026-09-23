@@ -5,7 +5,7 @@ export class GeneratedImageReadModel {
         public readonly url: string,
         public readonly metadata: {
             positivePrompt: string;
-            negativePrompt?: string;
+            negativePrompt?: string | null;
             seed: number;
             width: number;
             height: number;

@@ -5,7 +5,7 @@ describe("StoreGenerationJobCommandHandler", () => {
     it("returns each newly created job ID even for concurrent requests", async () => {
         const ids = ["job-a", "job-b"];
         const uuid = { generate: jest.fn(() => ids.shift()) };
-        const workflow = { get: jest.fn().mockReturnValue("{}") };
+        const workflow = { build: jest.fn().mockReturnValue("{}") };
         const repository = { store: jest.fn().mockResolvedValue(undefined) };
         const queue = { add: jest.fn().mockResolvedValue(undefined) };
         const handler = new StoreGenerationJobCommandHandler(

@@ -1,5 +1,11 @@
-import { CommandHandler } from "../../../../../Common/Application/Handlers/CommandHandler";
 import { Inject, Injectable } from "@nestjs/common";
+import {
+    CommandHandler as NestCommandHandler,
+    ICommandHandler,
+} from "@nestjs/cqrs";
+import { InjectQueue } from "@nestjs/bull";
+import type { Queue } from "bull";
+import { ConfigService } from "@nestjs/config";
 import { StoreGenerationJobCommand as Command } from "../../../Input/Commands/StoreGenerationJobCommand";
 import { GenerationJob as Aggregate } from "../../../../Domain/Model/Aggregates/GenerationJob";
 import {
@@ -13,19 +19,18 @@ import {
     type IWorkflowService,
     WORKFLOW_SERVICE,
 } from "../../../../Domain/Services/Contracts/IWorkflowService";
-import { ConfigService } from "@nestjs/config";
-import { StoreGenerationJobDTO } from "../../../DTO/StoreGenerationJobDTO";
 import {
     GENERATION_JOB_REPOSITORY,
     type IGenerationJobRepository,
 } from "../../../../Domain/Factories/Contracts/IGenerationJobRepository";
-import type { Queue } from "bull";
-import { InjectQueue } from "@nestjs/bull";
 import { QueueGenerationJobDTO as JobDTO } from "../../../DTO/QueueGenerationJobDTO";
-import { GenerationJobReadModel } from "../../../Model/GenerationJobReadModel";
+import { GenerationJobReadModel as ReadModel } from "../../../Model/GenerationJobReadModel";
 
 @Injectable()
-export class StoreGenerationJobCommandHandler extends CommandHandler {
+@NestCommandHandler(Command)
+export class StoreGenerationJobCommandHandler
+    implements ICommandHandler<Command, ReadModel>
+{
     constructor(
         @Inject(UUID_SERVICE)
         private readonly uuidService: IUuidService,
@@ -35,14 +40,13 @@ export class StoreGenerationJobCommandHandler extends CommandHandler {
         @Inject(GENERATION_JOB_REPOSITORY)
         private readonly repository: IGenerationJobRepository,
         @InjectQueue("image_queue") private queue: Queue,
-    ) {
-        super();
-    }
+    ) {}
 
-    public async execute(command: Command): Promise<GenerationJobReadModel> {
-        const workflow = this.workflowService.get(
+    public async execute(command: Command): Promise<ReadModel> {
+        const workflow = this.workflowService.build(
             this.config.get<string>("DEFAULT_GENERATION_WORKFLOW") ||
                 "base.json",
+            command.dto,
         );
 
         const aggregate = Aggregate.create(
@@ -60,68 +64,25 @@ export class StoreGenerationJobCommandHandler extends CommandHandler {
                 command.dto.sampler,
                 command.dto.scheduler,
             ),
-            new Workflow(this.replaceParamsInWorkflow(workflow, command.dto)),
+            new Workflow(workflow),
         );
 
         await this.repository.store(aggregate, command.sessionId);
 
-        const dto: JobDTO = new JobDTO(aggregate.getId().value());
+        await this.queue.add(
+            "queue_image",
+            new JobDTO(aggregate.getId().value()),
+            {
+                attempts: 3,
+                backoff: { type: "exponential", delay: 1000 },
+            },
+        );
 
-        await this.queue.add("queue_image", dto, {
-            attempts: 3,
-            backoff: { type: "exponential", delay: 1000 },
-        });
-        return new GenerationJobReadModel(
+        return new ReadModel(
             aggregate.getId().value(),
-            aggregate.getStatus(),
+            aggregate.getStatus().toString(),
             aggregate.getCreatedAt(),
             [],
         );
-    }
-
-    private replaceParamsInWorkflow(
-        rawWorkflow: string,
-        params: StoreGenerationJobDTO,
-    ): string {
-        const wf = JSON.parse(rawWorkflow);
-
-        /* --------------------------------------------------------------------
-         * 3 – KSampler (seed/steps/cfg/sampler_name/scheduler)
-         * 4 – CheckpointLoaderSimple (ckpt_name – имя модели)
-         * 5 – EmptyLatentImage (width/height/batch_size)
-         * 6 – CLIPTextEncode (positive prompt)
-         * 7 – CLIPTextEncode (negative prompt)
-         * -------------------------------------------------------------------- */
-
-        if (wf["3"]?.inputs) {
-            wf["3"].inputs.seed = params.seed;
-            wf["3"].inputs.steps = params.steps;
-            wf["3"].inputs.cfg = params.cfg;
-            wf["3"].inputs.sampler_name = params.sampler;
-            wf["3"].inputs.scheduler = params.scheduler;
-        }
-
-        if (wf["4"]?.inputs) {
-            const modelName = params.model ?? "";
-            wf["4"].inputs.ckpt_name = modelName.endsWith(".safetensors")
-                ? modelName
-                : `${modelName}.safetensors`;
-        }
-
-        if (wf["5"]?.inputs) {
-            wf["5"].inputs.width = params.width;
-            wf["5"].inputs.height = params.height;
-            wf["5"].inputs.batch_size = 1;
-        }
-
-        if (wf["6"]?.inputs) {
-            wf["6"].inputs.text = params.positivePrompt;
-        }
-
-        if (wf["7"]?.inputs) {
-            wf["7"].inputs.text = params.negativePrompt;
-        }
-
-        return JSON.stringify(wf);
     }
 }

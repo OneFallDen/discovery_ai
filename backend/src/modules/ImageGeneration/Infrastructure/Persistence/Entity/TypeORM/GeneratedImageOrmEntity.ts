@@ -19,19 +19,19 @@ export class GeneratedImageOrmEntity {
     @JoinColumn({ name: "job_id" })
     job: Relation<GenerationJobOrmEntity>;
 
-    @Column()
+    @Column({ name: "job_id", type: "uuid" })
     jobId: string;
 
     @Column()
     filename: string;
 
-    @Column()
+    @Column({ type: "text" })
     url: string;
 
     @Column({ type: "jsonb", nullable: true })
     metadata: {
         positivePrompt: string;
-        negativePrompt?: string;
+        negativePrompt?: string | null;
         seed: number;
         width: number;
         height: number;

@@ -10,6 +10,7 @@ import {
     NotFoundException,
     Header,
     UseInterceptors,
+    UsePipes,
 } from "@nestjs/common";
 import { NoFilesInterceptor } from "@nestjs/platform-express";
 import { StoreGenerationJobRequest } from "../Requests/StoreGenerationJobRequest";
@@ -21,6 +22,7 @@ import { StoreGenerationJobResponse } from "../Responses/StoreGenerationJobRespo
 import type { Request, Response } from "express";
 import { GenerationSessionService } from "../../../Infrastructure/Services/GenerationSessionService";
 import { GenerationJobStatusReader } from "../../../Infrastructure/Persistence/Read/GenerationJobStatusReader";
+import { StoreGenerationJobValidationPipe } from "../Pipes/StoreGenerationJobValidationPipe";
 
 @Controller()
 export class GenerationController {
@@ -54,6 +56,7 @@ export class GenerationController {
     @Post("generate")
     @HttpCode(201)
     @UseInterceptors(NoFilesInterceptor())
+    @UsePipes(StoreGenerationJobValidationPipe)
     public async generate(
         @Req() httpRequest: Request,
         @Body() request: StoreGenerationJobRequest,

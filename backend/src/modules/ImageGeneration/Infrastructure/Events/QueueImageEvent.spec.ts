@@ -1,28 +1,57 @@
 import { QueueImageEvent } from "./QueueImageEvent";
 
 describe("QueueImageEvent", () => {
-    const create = () => {
+    it("rethrows non-final attempt errors without failing the job", async () => {
         const error = new Error("ComfyUI unavailable");
         const useCase = { execute: jest.fn().mockRejectedValue(error) };
-        const aggregate = { fail: jest.fn(), commit: jest.fn() };
-        const repository = { find: jest.fn().mockResolvedValue(aggregate), fail: jest.fn() };
-        const publisher = { mergeObjectContext: jest.fn((value) => value) };
-        const gateway = { sendImageFailed: jest.fn() };
-        return { error, aggregate, repository, gateway, event: new QueueImageEvent(useCase as any, repository as any, publisher as any, gateway as any) };
-    };
+        const failUseCase = { execute: jest.fn() };
+        const event = new QueueImageEvent(useCase as any, failUseCase as any);
+        const job = {
+            data: { uuid: "job-id" },
+            opts: { attempts: 3 },
+            attemptsMade: 0,
+        };
 
-    it("rethrows an intermediate failure for Bull to retry", async () => {
-        const { event, error, repository, gateway } = create();
-        await expect(event.handle({ data: { uuid: "job" }, opts: { attempts: 3 }, attemptsMade: 0 } as any)).rejects.toThrow(error);
-        expect(repository.fail).not.toHaveBeenCalled();
-        expect(gateway.sendImageFailed).not.toHaveBeenCalled();
+        await expect(event.handle(job as any)).rejects.toThrow(error);
+
+        expect(failUseCase.execute).not.toHaveBeenCalled();
     });
 
-    it("persists and sends the final failure", async () => {
-        const { event, error, aggregate, repository, gateway } = create();
-        await expect(event.handle({ data: { uuid: "job" }, opts: { attempts: 3 }, attemptsMade: 2 } as any)).rejects.toThrow(error);
-        expect(aggregate.fail).toHaveBeenCalledWith("ComfyUI unavailable");
-        expect(repository.fail).toHaveBeenCalledWith(aggregate);
-        expect(gateway.sendImageFailed).toHaveBeenCalledWith("job", "ComfyUI unavailable");
+    it("fails the generation job on the final attempt and rethrows", async () => {
+        const error = new Error("ComfyUI unavailable");
+        const useCase = { execute: jest.fn().mockRejectedValue(error) };
+        const failUseCase = { execute: jest.fn().mockResolvedValue(undefined) };
+        const event = new QueueImageEvent(useCase as any, failUseCase as any);
+        const job = {
+            data: { uuid: "job-id" },
+            opts: { attempts: 3 },
+            attemptsMade: 2,
+        };
+
+        await expect(event.handle(job as any)).rejects.toThrow(error);
+
+        expect(failUseCase.execute).toHaveBeenCalledWith(
+            "job-id",
+            "ComfyUI unavailable",
+        );
+    });
+
+    it("fails the generation job when retries are not configured", async () => {
+        const error = new Error("ComfyUI unavailable");
+        const useCase = { execute: jest.fn().mockRejectedValue(error) };
+        const failUseCase = { execute: jest.fn().mockResolvedValue(undefined) };
+        const event = new QueueImageEvent(useCase as any, failUseCase as any);
+        const job = {
+            data: { uuid: "job-id" },
+            opts: {},
+            attemptsMade: 0,
+        };
+
+        await expect(event.handle(job as any)).rejects.toThrow(error);
+
+        expect(failUseCase.execute).toHaveBeenCalledWith(
+            "job-id",
+            "ComfyUI unavailable",
+        );
     });
 });

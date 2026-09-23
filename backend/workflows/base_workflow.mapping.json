@@ -1,0 +1,7 @@
+{
+  "samplerNodeId": "3",
+  "checkpointNodeId": "4",
+  "latentImageNodeId": "5",
+  "positivePromptNodeId": "6",
+  "negativePromptNodeId": "7"
+}

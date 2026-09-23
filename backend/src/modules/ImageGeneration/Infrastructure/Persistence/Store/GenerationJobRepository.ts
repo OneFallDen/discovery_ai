@@ -8,7 +8,6 @@ import { GenerationJobNotFoundException } from "../../Exceptions/GenerationJobNo
 import { JobId } from "../../../Domain/Model/ValueObjects/JobId";
 import { GenerationParameters } from "../../../Domain/Model/ValueObjects/GenerationParameters";
 import { Workflow } from "../../../Domain/Model/ValueObjects/Workflow";
-import { JobStatus } from "../../../Domain/Model/ValueObjects/JobStatus";
 import { GeneratedImage } from "../../../Domain/Model/Entities/GeneratedImage";
 import { GeneratedImageOrmEntity } from "../Entity/TypeORM/GeneratedImageOrmEntity";
 
@@ -96,8 +95,10 @@ export class GenerationJobRepository implements IGenerationJobRepository {
             return ormEntity;
         });
 
-        model.status = JobStatus.Ready;
+        model.status = aggregate.getStatus();
         model.images = imagesOrmEntities;
+        model.errorMessage = aggregate.getErrorMessage();
+        model.completedAt = aggregate.getCompletedAt();
 
         await this.repository.save(model);
     }
