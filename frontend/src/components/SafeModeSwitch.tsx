@@ -1,28 +1,19 @@
-import {useState} from "react";
-
 interface SafeModeSwitchProps {
     isSafe: boolean;
     onToggle: () => void;
 }
 
-function SafeModeSwitch({isSafe, onToggle}: SafeModeSwitchProps) {
-    const [isActive, setIsActive] = useState(isSafe);
-
-    const toggle = () => {
-        setIsActive(!isActive);
-        onToggle();
-    };
-
+function SafeModeSwitch({ isSafe, onToggle }: SafeModeSwitchProps) {
     return (
         <div
-            className={`switch-wrapper ${isActive ? "active" : "unsafe"}`}
-            onClick={toggle}
+            className={`switch-wrapper ${isSafe ? "active" : "unsafe"}`}
+            onClick={onToggle}
         >
-      <span className="switch-label">
-        {isActive ? "Safe Mode" : "Unsafe Mode"}
-      </span>
+            <span className="switch-label">
+                {isSafe ? "Safe Mode" : "Unsafe Mode"}
+            </span>
         </div>
     );
-};
+}
 
 export default SafeModeSwitch;

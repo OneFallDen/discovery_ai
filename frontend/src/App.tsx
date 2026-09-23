@@ -1,122 +1,62 @@
-import "./App.css";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ControlsPanel from "./components/ControlsPanel";
 import ImageCard from "./components/ImageCard";
-import { useCallback, useState, useEffect, useRef } from "react";
-import ImageModal from "./components/ImageModal/ImageModal.tsx";
-
-interface ImageItem {
-    id: string;
-    status: "pending" | "completed";
-    url?: string;
-    ratio: number;
-}
+import ImageModal from "./components/ImageModal/ImageModal";
+import { useGenerationForm } from "./hooks/useGenerationForm";
+import { useImageEvents } from "./hooks/useImageEvents";
+import { useImageGeneration } from "./hooks/useImageGeneration";
+import { useInfiniteGeneration } from "./hooks/useInfiniteGeneration";
 
 function App() {
-    const [prompt, setPrompt] = useState("");
-    const [ratio, setRatio] = useState(1);
-    const [width, setWidth] = useState(665);
-    const [height, setHeight] = useState(665);
-    const [isSafe, setIsSafe] = useState(true);
-    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
-
-    const [images, setImages] = useState<ImageItem[]>([]);
-    const [isGenerating, setIsGenerating] = useState(false);
+    const form = useGenerationForm();
+    const {
+        images,
+        isGenerating,
+        isGeneratingRef,
+        generateOne,
+        resetImages,
+        markReady,
+        markError,
+    } = useImageGeneration();
+    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(
+        null,
+    );
     const [autoLoadEnabled, setAutoLoadEnabled] = useState(false);
+    const observerRef = useRef<HTMLDivElement | null>(null);
 
-    const onRatioChange = (ratio: number, width: number, height: number) => {
-        setRatio(ratio);
-        setWidth(width);
-        setHeight(height);
-    };
+    useImageEvents({
+        onReady: markReady,
+        onError: markError,
+    });
 
-    const isGeneratingRef = useRef(false);
-
-    useEffect(() => {
-        isGeneratingRef.current = isGenerating;
-    }, [isGenerating]);
-
-    useEffect(() => {
-        const ws = new WebSocket("/ws");
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.id && data.url) {
-                    data.url = data.url.replace(import.meta.env.VITE_COMFYUI_IMAGE_URL, `${window.location.origin}/comfyui`);
-                    setImages(prev =>
-                        prev.map(item =>
-                            item.id === data.id
-                                ? { ...item, status: "completed", url: data.url }
-                                : item
-                        )
-                    );
-                }
-
-                console.log(data);
-            } catch (err) {
-                console.error("WebSocket error", err);
-            }
-        };
-        return () => ws.close();
-    }, []);
-
-    const generateOne = useCallback(async () => {
-        if (!prompt.trim() || isGeneratingRef.current) return;
-
-        setIsGenerating(true);
-        try {
-            const formData = new FormData();
-            formData.append("positivePrompt", prompt);
-            formData.append("height", String(height));
-            formData.append("width", String(width));
-            formData.append("safeMode", String(isSafe));
-
-            const response = await fetch("/api/generate", {
-                method: "POST",
-                body: formData,
-            });
-            const result = await response.json();
-            const { id, status } = result.data;
-
-            setImages(prev => [...prev, { id, status, ratio, url: undefined }]);
-        } catch (error) {
-            console.error("Generation error", error);
-        } finally {
-            setIsGenerating(false);
-        }
-    }, [prompt, ratio, width, height, isSafe]);
+    const generateCurrent = useCallback(() => {
+        void generateOne({
+            prompt: form.prompt,
+            width: form.width,
+            height: form.height,
+            ratio: form.ratio,
+            isSafe: form.isSafe,
+        });
+    }, [form.height, form.isSafe, form.prompt, form.ratio, form.width, generateOne]);
 
     const handleGenerateClick = useCallback(() => {
-        setImages([]);
+        resetImages();
         setAutoLoadEnabled(true);
-        generateOne();
-    }, [generateOne]);
+        generateCurrent();
+    }, [generateCurrent, resetImages]);
 
     useEffect(() => {
         if (autoLoadEnabled) {
             setAutoLoadEnabled(false);
         }
-    }, [prompt]);
+    }, [form.prompt]);
 
-    const observerRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        if (!observerRef.current) return;
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (
-                    entries[0].isIntersecting &&
-                    !isGeneratingRef.current &&
-                    autoLoadEnabled &&
-                    prompt.trim()
-                ) {
-                    generateOne();
-                }
-            },
-            { rootMargin: "100px", threshold: 0.1 }
-        );
-        observer.observe(observerRef.current);
-        return () => observer.disconnect();
-    }, [generateOne, autoLoadEnabled, prompt, images.length]);
+    useInfiniteGeneration({
+        triggerRef: observerRef,
+        enabled: autoLoadEnabled,
+        canGenerate: !isGeneratingRef.current && Boolean(form.prompt.trim()),
+        onIntersect: generateCurrent,
+    });
 
     const handleImageClick = useCallback((imageUrl: string) => {
         setSelectedImageUrl(imageUrl);
@@ -129,12 +69,12 @@ function App() {
     return (
         <div className="app">
             <ControlsPanel
-                prompt={prompt}
-                onPromptChange={setPrompt}
-                ratio={ratio}
-                onRatioChange={onRatioChange}
-                isSafe={isSafe}
-                onSafeToggle={() => setIsSafe(prev => !prev)}
+                prompt={form.prompt}
+                onPromptChange={form.setPrompt}
+                ratio={form.ratio}
+                onRatioChange={form.onRatioChange}
+                isSafe={form.isSafe}
+                onSafeToggle={form.onSafeToggle}
                 onGenerate={handleGenerateClick}
                 isGenerating={isGenerating}
             />
@@ -147,6 +87,7 @@ function App() {
                             ratio={item.ratio}
                             status={item.status}
                             imageUrl={item.url}
+                            error={item.error}
                             onClick={handleImageClick}
                         />
                     ))}

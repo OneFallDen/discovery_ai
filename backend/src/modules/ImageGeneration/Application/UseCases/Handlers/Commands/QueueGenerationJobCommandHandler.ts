@@ -1,5 +1,4 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { CommandHandler } from "../../../../../Common/Application/Handlers/CommandHandler";
 import { QueueGenerationJobCommand as Command } from "../../../Input/Commands/QueueGenerationJobCommand";
 import {
     GENERATION_JOB_REPOSITORY,
@@ -10,19 +9,24 @@ import {
     COMFYUI_SERVICE,
     type IComfyUIService,
 } from "../../../../Domain/Services/Contracts/IComfyUIService";
-import { EventPublisher } from "@nestjs/cqrs";
+import {
+    CommandHandler as NestCommandHandler,
+    EventPublisher,
+    ICommandHandler,
+} from "@nestjs/cqrs";
 
 @Injectable()
-export class QueueGenerationJobCommandHandler extends CommandHandler {
+@NestCommandHandler(Command)
+export class QueueGenerationJobCommandHandler
+    implements ICommandHandler<Command, void>
+{
     constructor(
         @Inject(GENERATION_JOB_REPOSITORY)
         private readonly repository: IGenerationJobRepository,
         @Inject(COMFYUI_SERVICE)
         private readonly comfyUIService: IComfyUIService,
         private readonly publisher: EventPublisher,
-    ) {
-        super();
-    }
+    ) {}
 
     public async execute(command: Command): Promise<void> {
         const loadedAggregate: Aggregate = await this.repository.find(
@@ -32,20 +36,15 @@ export class QueueGenerationJobCommandHandler extends CommandHandler {
         const aggregate: Aggregate =
             this.publisher.mergeObjectContext(loadedAggregate);
 
-        try {
-            aggregate.queue();
+        aggregate.queue();
 
-            const promptId = await this.comfyUIService.queuePrompt(
-                aggregate.getWorkflow().value(),
-            );
+        const promptId = await this.comfyUIService.queuePrompt(
+            aggregate.getWorkflow().value(),
+        );
 
-            aggregate.queued(promptId);
+        aggregate.queued(promptId);
 
-            aggregate.commit();
-
-            await this.repository.queue(aggregate);
-        } catch (e) {
-            console.error(e);
-        }
+        await this.repository.queue(aggregate);
+        aggregate.commit();
     }
 }

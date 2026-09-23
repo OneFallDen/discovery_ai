@@ -12,34 +12,27 @@ export class StoreGenerationJobMapper {
     }
 
     public map(request: Request): DTO {
-        const isSafeMode = request.safeMode === "true";
+        const isSafeMode = request.safeMode;
 
-        return {
-            positivePrompt: request.positivePrompt,
-            negativePrompt: !isSafeMode
-                ? request.negativePrompt
-                    ? request.negativePrompt
-                    : null
-                : this.config.get<string>("DEFAULT_SAFE_MODE_PROMPT"),
-            seed: request.seed ? request.seed : this.generateSeed(),
-            width: request.width,
-            height: request.height,
-            steps: request.steps
-                ? request.steps
-                : this.config.get<string>("DEFAULT_GENERATION_STEPS"),
-            cfg: request.cfg
-                ? request.cfg
-                : this.config.get<string>("DEFAULT_GENERATION_CFG"),
-            nsfwEnabled: !isSafeMode,
-            model: request.model
-                ? request.model
-                : this.config.get<string>("DEFAULT_GENERATION_MODEL"),
-            sampler: request.sampler
-                ? request.sampler
-                : this.config.get<string>("DEFAULT_GENERATION_SAMPLER"),
-            scheduler: request.scheduler
-                ? request.scheduler
-                : this.config.get<string>("DEFAULT_GENERATION_SCHEDULER"),
-        } as DTO;
+        return new DTO(
+            request.positivePrompt,
+            isSafeMode
+                ? this.config.get<string>("DEFAULT_SAFE_MODE_PROMPT") ?? null
+                : request.negativePrompt || null,
+            request.seed ?? this.generateSeed(),
+            request.width,
+            request.height,
+            request.steps ??
+                this.config.get<number>("DEFAULT_GENERATION_STEPS") ??
+                20,
+            request.cfg ?? this.config.get<number>("DEFAULT_GENERATION_CFG") ?? 7,
+            !isSafeMode,
+            request.model ??
+                this.config.get<string>("DEFAULT_GENERATION_MODEL"),
+            request.sampler ??
+                this.config.get<string>("DEFAULT_GENERATION_SAMPLER"),
+            request.scheduler ??
+                this.config.get<string>("DEFAULT_GENERATION_SCHEDULER"),
+        );
     }
 }

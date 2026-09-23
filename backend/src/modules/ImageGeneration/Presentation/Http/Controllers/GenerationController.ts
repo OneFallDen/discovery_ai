@@ -4,6 +4,7 @@ import {
     HttpCode,
     Post,
     UseInterceptors,
+    UsePipes,
 } from "@nestjs/common";
 import { NoFilesInterceptor } from "@nestjs/platform-express";
 import { StoreGenerationJobRequest } from "../Requests/StoreGenerationJobRequest";
@@ -12,6 +13,7 @@ import { StoreGenerationJobDTO } from "../../../Application/DTO/StoreGenerationJ
 import { StoreGenerationJobUseCase } from "../../../Application/UseCases/StoreGenerationJobUseCase";
 import { GenerationJobReadModel } from "../../../Application/Model/GenerationJobReadModel";
 import { StoreGenerationJobResponse } from "../Responses/StoreGenerationJobResponse";
+import { StoreGenerationJobValidationPipe } from "../Pipes/StoreGenerationJobValidationPipe";
 
 @Controller()
 export class GenerationController {
@@ -23,6 +25,7 @@ export class GenerationController {
     @Post("generate")
     @HttpCode(201)
     @UseInterceptors(NoFilesInterceptor())
+    @UsePipes(StoreGenerationJobValidationPipe)
     public async generate(
         @Body() request: StoreGenerationJobRequest,
     ): Promise<StoreGenerationJobResponse> {

@@ -1,4 +1,3 @@
-import { CommandHandler } from "../../../../../Common/Application/Handlers/CommandHandler";
 import { CompleteGenerationJobCommand as Command } from "../../../Input/Commands/CompleteGenerationJobCommand";
 import { Inject, Injectable } from "@nestjs/common";
 import {
@@ -16,10 +15,17 @@ import {
     type IUuidService,
     UUID_SERVICE,
 } from "../../../../../Common/Domain/Services/Contracts/IUuidService";
-import { EventPublisher } from "@nestjs/cqrs";
+import {
+    CommandHandler as NestCommandHandler,
+    EventPublisher,
+    ICommandHandler,
+} from "@nestjs/cqrs";
 
 @Injectable()
-export class CompleteGenerationJobCommandHandler extends CommandHandler {
+@NestCommandHandler(Command)
+export class CompleteGenerationJobCommandHandler
+    implements ICommandHandler<Command, void>
+{
     constructor(
         @Inject(GENERATION_JOB_REPOSITORY)
         private readonly repository: IGenerationJobRepository,
@@ -28,9 +34,7 @@ export class CompleteGenerationJobCommandHandler extends CommandHandler {
         @Inject(UUID_SERVICE)
         private readonly uuidService: IUuidService,
         private readonly publisher: EventPublisher,
-    ) {
-        super();
-    }
+    ) {}
 
     public async execute(command: Command): Promise<void> {
         let aggregate: Aggregate = await this.repository.findByPromptId(
@@ -58,8 +62,8 @@ export class CompleteGenerationJobCommandHandler extends CommandHandler {
         }
 
         aggregate.complete(generatedImages);
-        aggregate.commit();
 
         await this.repository.complete(aggregate);
+        aggregate.commit();
     }
 }

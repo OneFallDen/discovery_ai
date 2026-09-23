@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { CommandBus } from "../../../Common/Infrastructure/Bus/CommandBus";
+import { CommandBus } from "@nestjs/cqrs";
 import { QueueGenerationJobDTO as DTO } from "../DTO/QueueGenerationJobDTO";
 import { QueueGenerationJobMapper } from "../Mappers/QueueGenerationJobMapper";
 
