@@ -1,16 +1,15 @@
 export class StoreGenerationJobRequest {
     constructor(
         public readonly positivePrompt: string,
-        public readonly negativePrompt?: string,
-        // @ts-ignore
-        public readonly seed: number,
+        public readonly negativePrompt: string | null,
+        public readonly seed: number | null,
         public readonly width: number,
         public readonly height: number,
-        public readonly steps: number,
-        public readonly cfg: number,
-        public readonly safeMode: string,
-        public readonly model?: string,
-        public readonly sampler?: string,
-        public readonly scheduler?: string,
+        public readonly steps: number | null,
+        public readonly cfg: number | null,
+        public readonly safeMode: boolean,
+        public readonly model: string | null,
+        public readonly sampler: string | null,
+        public readonly scheduler: string | null,
     ) {}
 }

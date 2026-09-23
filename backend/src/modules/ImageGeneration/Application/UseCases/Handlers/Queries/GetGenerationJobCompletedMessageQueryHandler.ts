@@ -1,22 +1,26 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { QueryHandler } from "../../../../../Common/Application/Handlers/QueryHandler";
 import { GetGenerationJobCompletedMessage as Message } from "../../../Messages/GetGenerationJobCompletedMessage";
 import { GetGenerationJobCompletedMessageQuery as Query } from "../../../Input/Queries/GetGenerationJobCompletedMessageQuery";
 import {
     GENERATION_JOB_READER,
     type IGenerationJobReader,
 } from "../../../../Domain/Factories/Contracts/IGenerationJobReader";
+import {
+    IQueryHandler,
+    QueryHandler as NestQueryHandler,
+} from "@nestjs/cqrs";
 
 @Injectable()
-export class GetGenerationJobCompletedMessageQueryHandler extends QueryHandler {
+@NestQueryHandler(Query)
+export class GetGenerationJobCompletedMessageQueryHandler
+    implements IQueryHandler<Query, Message>
+{
     constructor(
         @Inject(GENERATION_JOB_READER)
         private readonly reader: IGenerationJobReader,
-    ) {
-        super();
-    }
+    ) {}
 
-    public async handle(query: Query): Promise<Message> {
+    public async execute(query: Query): Promise<Message> {
         const model = await this.reader.getByPromptId(query.dto.promptId);
 
         if (!model || model.images.length === 0) {

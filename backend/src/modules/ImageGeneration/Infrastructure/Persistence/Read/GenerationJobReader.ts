@@ -75,7 +75,7 @@ export class GenerationJobReader implements IGenerationJobReader {
     public async last(): Promise<GenerationJobReadModel> {
         const model = await this.repository
             .createQueryBuilder("generation_jobs")
-            .orderBy("id", "DESC")
+            .orderBy("generation_jobs.createdAt", "DESC")
             .getOne();
 
         if (!model) {

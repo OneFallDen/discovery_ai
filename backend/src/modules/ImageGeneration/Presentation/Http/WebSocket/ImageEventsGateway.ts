@@ -26,7 +26,12 @@ export class ImageEventsGateway
     }
 
     public sendImageReady(id: string, url: string) {
-        const message = JSON.stringify({ id, url });
+        const message = JSON.stringify({
+            type: "generation.ready",
+            id,
+            url,
+            status: "ready",
+        });
         this.server.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(message);
@@ -36,7 +41,12 @@ export class ImageEventsGateway
     }
 
     public sendImageFailed(id: string, error: string) {
-        const message = JSON.stringify({ id, error, status: "failed" });
+        const message = JSON.stringify({
+            type: "generation.failed",
+            id,
+            error,
+            status: "error",
+        });
         this.server.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(message);

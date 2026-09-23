@@ -1,6 +1,6 @@
 export type GenerationParamsJson = {
     positivePrompt: string;
-    negativePrompt?: string;
+    negativePrompt?: string | null;
     seed: number;
     width: number;
     height: number;
@@ -15,8 +15,7 @@ export type GenerationParamsJson = {
 export class GenerationParameters {
     constructor(
         private readonly positivePrompt: string,
-        private readonly negativePrompt?: string,
-        // @ts-ignore
+        private readonly negativePrompt: string | null,
         private readonly seed: number,
         private readonly width: number,
         private readonly height: number,
@@ -32,7 +31,7 @@ export class GenerationParameters {
         return this.positivePrompt;
     }
 
-    public getNegativePrompt(): string | undefined {
+    public getNegativePrompt(): string | null {
         return this.negativePrompt;
     }
 
@@ -95,7 +94,7 @@ export class GenerationParameters {
     public static fromJson(json: GenerationParamsJson): GenerationParameters {
         return new GenerationParameters(
             json.positivePrompt,
-            json.negativePrompt,
+            json.negativePrompt ?? null,
             json.seed,
             json.width,
             json.height,

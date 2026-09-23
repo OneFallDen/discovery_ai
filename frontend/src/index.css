@@ -2,89 +2,36 @@
     --bg-body: #121212;
     --bg-panel: #1e1e1e;
     --bg-card: #2a2a2a;
+    --bg-card-muted: #333333;
     --text-main: #ffffff;
     --text-muted: #aaaaaa;
     --accent: #646cff;
     --accent-hover: #535bf2;
     --border: #333333;
-
     --safe-color-on: #00e676;
     --safe-color-off: #ff1744;
-
     --header-height: 60px;
+    --border-radius: 8px;
     --transition: 0.3s ease;
-    --thumb-size: 28px;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-}
-.app {
-    background-color: #121212;
-    min-height: 100vh;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.gallery-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.gallery-grid {
-    display: grid;
-    gap: 20px;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-}
-
-.card {
-    background: #2a2a2a;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #333;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
-
-.card-image {
-    width: 100%;
-    background-color: #333;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.skeleton {
-    width: 100%;
-    background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-.scroll-trigger {
-    height: 20px;
-    width: 100%;
-    margin: 20px 0;
-}
 body {
     background-color: var(--bg-body);
     color: var(--text-main);
     overflow-x: hidden;
     padding-top: var(--header-height);
+}
+
+.app {
+    min-height: 100vh;
+    background-color: var(--bg-body);
 }
 
 header {
@@ -119,7 +66,7 @@ header {
     border-bottom: 1px solid var(--border);
     padding: 15px;
     z-index: 900;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     transition: var(--transition);
 }
 
@@ -138,15 +85,15 @@ header {
 
 textarea {
     flex-grow: 1;
+    height: 50px;
+    padding: 12px;
+    resize: none;
     background: var(--bg-body);
     border: 1px solid var(--border);
-    color: var(--text-main);
-    padding: 12px;
     border-radius: var(--border-radius);
-    resize: none;
-    height: 50px;
-    transition: var(--transition);
+    color: var(--text-main);
     font-size: 1rem;
+    transition: var(--transition);
 }
 
 textarea:focus {
@@ -155,19 +102,19 @@ textarea:focus {
 }
 
 button.primary-btn {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 0 20px;
-    border-radius: var(--border-radius);
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
     height: 50px;
-    font-size: 1rem;
+    padding: 0 20px;
     display: flex;
     align-items: center;
     gap: 8px;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--border-radius);
+    color: white;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: var(--transition);
 }
 
 button.primary-btn:hover {
@@ -179,6 +126,12 @@ button.primary-btn:active {
     transform: translateY(1px);
 }
 
+button.primary-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    transform: none;
+}
+
 .settings-row {
     display: flex;
     justify-content: space-between;
@@ -188,13 +141,13 @@ button.primary-btn:active {
 }
 
 .switch-wrapper {
-    display: flex;
-    align-items: center;
     height: 44px;
     padding: 0 15px;
+    display: flex;
+    align-items: center;
     background: var(--bg-card);
-    border-radius: 22px;
     border: 1px solid var(--border);
+    border-radius: 22px;
     cursor: pointer;
     transition: var(--transition);
     user-select: none;
@@ -214,7 +167,6 @@ button.primary-btn:active {
 
 .switch-wrapper.active .switch-label {
     color: var(--safe-color-on);
-    text-shadow: 0 0 8px rgba(0, 230, 118, 0.6);
 }
 
 .switch-wrapper.unsafe {
@@ -225,7 +177,6 @@ button.primary-btn:active {
 
 .switch-wrapper.unsafe .switch-label {
     color: var(--safe-color-off);
-    text-shadow: 0 0 8px rgba(255, 23, 68, 0.6);
 }
 
 .ratio-selector {
@@ -234,11 +185,11 @@ button.primary-btn:active {
 }
 
 .ratio-btn {
+    padding: 6px 12px;
     background: transparent;
     border: 1px solid var(--border);
+    border-radius: var(--border-radius);
     color: var(--text-muted);
-    padding: 6px 12px;
-    border-radius: 8px;
     cursor: pointer;
     transition: var(--transition);
 }
@@ -249,16 +200,16 @@ button.primary-btn:active {
 
 .ratio-btn.selected {
     background: var(--bg-card);
-    color: var(--accent);
     border-color: var(--accent);
+    color: var(--accent);
     font-weight: 600;
 }
 
-main {
+.gallery-container {
     max-width: 1400px;
+    min-height: 90vh;
     margin: 0 auto;
     padding: 20px;
-    min-height: 90vh;
 }
 
 .gallery-grid {
@@ -269,23 +220,30 @@ main {
 
 .card {
     background: var(--bg-card);
-    border-radius: var(--border-radius);
-    overflow: hidden;
     border: 1px solid var(--border);
-    position: relative;
-    animation: fadeIn 0.5s ease forwards;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 .card-image {
     width: 100%;
-    background-color: #333;
+    background-color: var(--bg-card-muted);
+    color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
     font-size: 0.8rem;
     position: relative;
 }
@@ -293,47 +251,53 @@ main {
 .card-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
     display: block;
+    object-fit: cover;
 }
 
 .skeleton {
     width: 100%;
-    background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
+    background: linear-gradient(90deg, #2a2a2a 25%, #333333 50%, #2a2a2a 75%);
     background-size: 200% 100%;
     animation: loading 1.5s infinite;
 }
 
+.card-error {
+    width: 100%;
+    min-height: 120px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--safe-color-off);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.scroll-trigger {
+    width: 100%;
+    height: 20px;
+    margin: 20px 0;
+}
+
 @keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--accent);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 30px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-    z-index: 2000;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.toast.show {
-    transform: translateX(-50%) translateY(0);
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @media (max-width: 768px) {
@@ -348,15 +312,14 @@ main {
         flex-direction: column;
     }
 
-    textarea {
+    textarea,
+    button.primary-btn {
         height: 40px;
-        font-size: 14px;
+        font-size: 0.9rem;
     }
 
     button.primary-btn {
-        height: 40px;
         padding: 0 15px;
-        font-size: 0.9rem;
     }
 
     .settings-row {
@@ -367,20 +330,4 @@ main {
     .ratio-selector {
         justify-content: center;
     }
-}
-
-.scroll-trigger {
-    height: 20px;
-    width: 100%;
-    margin: 20px 0;
-}
-
-.card {
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
 }

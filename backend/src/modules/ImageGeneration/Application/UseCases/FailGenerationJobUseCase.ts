@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { FailGenerationJobMapper as Mapper } from "../Mappers/FailGenerationJobMapper";
-import { CommandBus } from "../../../Common/Infrastructure/Bus/CommandBus";
+import { CommandBus } from "@nestjs/cqrs";
 import { FailGenerationJobDTO as DTO } from "../DTO/FailGenerationJobDTO";
 
 @Injectable()

@@ -123,6 +123,7 @@ export class GenerationJob extends AggregateRoot {
 
         this.status = JobStatus.Queued;
         this.comfyPromptId = comfyPromptId;
+        this.updatedAt = new Date();
 
         this.apply(new GenerationJobQueuedEvent(this.id, comfyPromptId));
     }
@@ -138,6 +139,8 @@ export class GenerationJob extends AggregateRoot {
 
         this.status = JobStatus.Ready;
         this.images = images;
+        this.updatedAt = new Date();
+        this.completedAt = this.updatedAt;
 
         this.apply(new GenerationJobCompletedEvent(this.id, this.images));
     }
@@ -149,6 +152,7 @@ export class GenerationJob extends AggregateRoot {
 
         this.status = JobStatus.Error;
         this.errorMessage = error;
+        this.updatedAt = new Date();
 
         this.apply(new GenerationJobFailedEvent(this.id, error));
     }

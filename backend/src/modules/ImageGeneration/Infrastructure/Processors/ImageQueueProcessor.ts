@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Process, Processor } from "@nestjs/bull";
-import { Job } from "bullmq";
+import type { Job } from "bull";
 import { QueueGenerationJobDTO } from "../../Application/DTO/QueueGenerationJobDTO";
 import { QueueImageEvent } from "../Events/QueueImageEvent";
 
