@@ -7,6 +7,6 @@ export class GenerationJobFailedHandler implements IEventHandler<Event> {
     constructor(private readonly imageEventsGateway: ImageEventsGateway) {}
 
     public async handle(event: Event): Promise<void> {
-        this.imageEventsGateway.sendImageFailed(event.id.value(), event.error);
+        await this.imageEventsGateway.sendImageFailed(event.id.value(), event.error);
     }
 }

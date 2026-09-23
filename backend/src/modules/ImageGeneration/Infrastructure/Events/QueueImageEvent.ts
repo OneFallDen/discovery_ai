@@ -17,27 +17,17 @@ export class QueueImageEvent {
         try {
             await this.useCase.execute(job.data);
         } catch (error) {
-            if (this.isFinalAttempt(job)) {
+            if (job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
                 await this.failGenerationJobByIdUseCase.execute(
                     job.data.uuid,
-                    this.getErrorMessage(error),
+                    error instanceof Error ? error.message : String(error),
                 );
             }
-
             this.logger.error(
                 `Failed to queue generation job ${job.data.uuid}`,
                 error instanceof Error ? error.stack : String(error),
             );
             throw error;
         }
-    }
-
-    private isFinalAttempt(job: Job<JobDTO>): boolean {
-        const attempts = job.opts.attempts ?? 1;
-        return job.attemptsMade + 1 >= attempts;
-    }
-
-    private getErrorMessage(error: unknown): string {
-        return error instanceof Error ? error.message : String(error);
     }
 }

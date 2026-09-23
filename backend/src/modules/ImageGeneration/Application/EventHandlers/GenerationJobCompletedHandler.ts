@@ -13,7 +13,7 @@ export class GenerationJobCompletedHandler implements IEventHandler<Event> {
             return;
         }
 
-        this.imageEventsGateway.sendImageReady(
+        await this.imageEventsGateway.sendImageReady(
             event.id.value(),
             firstImage.getUrl(),
         );

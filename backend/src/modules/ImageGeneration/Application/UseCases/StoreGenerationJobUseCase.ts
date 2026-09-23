@@ -11,8 +11,8 @@ export class StoreGenerationJobUseCase {
         private readonly storeGenerationJobCommandMapper: StoreGenerationJobCommandMapper,
     ) {}
 
-    public async execute(dto: DTO): Promise<ReadModel> {
-        const command = this.storeGenerationJobCommandMapper.map(dto);
+    public async execute(dto: DTO, sessionId: string): Promise<ReadModel> {
+        const command = this.storeGenerationJobCommandMapper.map(dto, sessionId);
         return await this.commandBus.execute(command);
     }
 }

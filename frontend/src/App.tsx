@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import ControlsPanel from "./components/ControlsPanel";
 import ImageCard from "./components/ImageCard";
 import ImageModal from "./components/ImageModal/ImageModal";
@@ -9,27 +9,26 @@ import { useInfiniteGeneration } from "./hooks/useInfiniteGeneration";
 
 function App() {
     const form = useGenerationForm();
+    const setPrompt = form.setPrompt;
     const {
         images,
         isGenerating,
-        isGeneratingRef,
         generateOne,
-        resetImages,
+        syncJobs,
         markReady,
         markError,
     } = useImageGeneration();
-    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(
-        null,
-    );
+    const sessionReady = useImageEvents({
+        onReady: markReady,
+        onError: markError,
+        onOpen: syncJobs,
+    });
+    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [autoLoadEnabled, setAutoLoadEnabled] = useState(false);
     const observerRef = useRef<HTMLDivElement | null>(null);
 
-    useImageEvents({
-        onReady: markReady,
-        onError: markError,
-    });
-
     const generateCurrent = useCallback(() => {
+        if (!sessionReady) return;
         void generateOne({
             prompt: form.prompt,
             width: form.width,
@@ -37,46 +36,36 @@ function App() {
             ratio: form.ratio,
             isSafe: form.isSafe,
         });
-    }, [form.height, form.isSafe, form.prompt, form.ratio, form.width, generateOne]);
+    }, [form.height, form.isSafe, form.prompt, form.ratio, form.width, generateOne, sessionReady]);
 
     const handleGenerateClick = useCallback(() => {
-        resetImages();
         setAutoLoadEnabled(true);
         generateCurrent();
-    }, [generateCurrent, resetImages]);
+    }, [generateCurrent]);
 
-    useEffect(() => {
-        if (autoLoadEnabled) {
-            setAutoLoadEnabled(false);
-        }
-    }, [form.prompt]);
+    const handlePromptChange = useCallback((value: string) => {
+        setAutoLoadEnabled(false);
+        setPrompt(value);
+    }, [setPrompt]);
 
     useInfiniteGeneration({
         triggerRef: observerRef,
         enabled: autoLoadEnabled,
-        canGenerate: !isGeneratingRef.current && Boolean(form.prompt.trim()),
+        canGenerate: sessionReady && !isGenerating && Boolean(form.prompt.trim()),
         onIntersect: generateCurrent,
     });
-
-    const handleImageClick = useCallback((imageUrl: string) => {
-        setSelectedImageUrl(imageUrl);
-    }, []);
-
-    const handleCloseModal = useCallback(() => {
-        setSelectedImageUrl(null);
-    }, []);
 
     return (
         <div className="app">
             <ControlsPanel
                 prompt={form.prompt}
-                onPromptChange={form.setPrompt}
+                onPromptChange={handlePromptChange}
                 ratio={form.ratio}
                 onRatioChange={form.onRatioChange}
                 isSafe={form.isSafe}
                 onSafeToggle={form.onSafeToggle}
                 onGenerate={handleGenerateClick}
-                isGenerating={isGenerating}
+                isGenerating={isGenerating || !sessionReady}
             />
             <main className="gallery-container">
                 <div className="gallery-grid">
@@ -88,7 +77,7 @@ function App() {
                             status={item.status}
                             imageUrl={item.url}
                             error={item.error}
-                            onClick={handleImageClick}
+                            onClick={setSelectedImageUrl}
                         />
                     ))}
                 </div>
@@ -99,7 +88,7 @@ function App() {
                 <ImageModal
                     imageUrl={selectedImageUrl}
                     alt="Generated image"
-                    onClose={handleCloseModal}
+                    onClose={() => setSelectedImageUrl(null)}
                 />
             )}
         </div>

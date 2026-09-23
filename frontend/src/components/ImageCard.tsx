@@ -9,7 +9,7 @@ interface ImageCardProps {
     onClick?: (imageUrl: string) => void;
 }
 
-function ImageCard({ id: _id, ratio, status, imageUrl, error, onClick }: ImageCardProps) {
+function ImageCard({ ratio, status, imageUrl, error, onClick }: ImageCardProps) {
     const [imgLoaded, setImgLoaded] = useState(false);
 
     const handleClick = () => {

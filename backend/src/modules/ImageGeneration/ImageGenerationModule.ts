@@ -38,36 +38,22 @@ import { GetGenerationJobCompletedMessageQueryHandler } from "./Application/UseC
 import { ComfyUIEventsListener } from "./Infrastructure/Events/ComfyUIEventsListener";
 import { FailGenerationJobByIdUseCase } from "./Application/UseCases/FailGenerationJobByIdUseCase";
 import { StoreGenerationJobValidationPipe } from "./Presentation/Http/Pipes/StoreGenerationJobValidationPipe";
+import { ComfyUIClientId } from "./Infrastructure/Services/ComfyUIClientId";
+import { GenerationSessionService } from "./Infrastructure/Services/GenerationSessionService";
+import { GenerationJobStatusReader } from "./Infrastructure/Persistence/Read/GenerationJobStatusReader";
 
 @Module({
     imports: [
         CommonModule,
         CqrsModule,
-        BullModule.registerQueue({
-            name: "image_queue",
-        }),
-        TypeOrmModule.forFeature([
-            GenerationJobOrmEntity,
-            GeneratedImageOrmEntity,
-        ]),
+        BullModule.registerQueue({ name: "image_queue" }),
+        TypeOrmModule.forFeature([GenerationJobOrmEntity, GeneratedImageOrmEntity]),
     ],
     providers: [
-        {
-            provide: WORKFLOW_SERVICE,
-            useClass: WorkflowService,
-        },
-        {
-            provide: GENERATION_JOB_REPOSITORY,
-            useClass: GenerationJobRepository,
-        },
-        {
-            provide: COMFYUI_SERVICE,
-            useClass: ComfyUIService,
-        },
-        {
-            provide: GENERATION_JOB_READER,
-            useClass: GenerationJobReader,
-        },
+        { provide: WORKFLOW_SERVICE, useClass: WorkflowService },
+        { provide: GENERATION_JOB_REPOSITORY, useClass: GenerationJobRepository },
+        { provide: COMFYUI_SERVICE, useClass: ComfyUIService },
+        { provide: GENERATION_JOB_READER, useClass: GenerationJobReader },
         StoreGenerationJobUseCase,
         StoreGenerationJobMapper,
         StoreGenerationJobCommandMapper,
@@ -92,6 +78,9 @@ import { StoreGenerationJobValidationPipe } from "./Presentation/Http/Pipes/Stor
         GetGenerationJobCompletedMessageQueryHandler,
         ComfyUIEventsListener,
         StoreGenerationJobValidationPipe,
+        ComfyUIClientId,
+        GenerationSessionService,
+        GenerationJobStatusReader,
     ],
     controllers: [GenerationController],
 })

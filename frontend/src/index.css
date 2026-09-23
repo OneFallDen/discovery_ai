@@ -272,6 +272,7 @@ button.primary-btn:disabled {
     color: var(--safe-color-off);
     text-align: center;
     font-size: 0.9rem;
+    overflow-wrap: anywhere;
 }
 
 .scroll-trigger {

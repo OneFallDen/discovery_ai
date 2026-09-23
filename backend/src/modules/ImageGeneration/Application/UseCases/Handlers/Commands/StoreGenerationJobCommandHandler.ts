@@ -67,7 +67,7 @@ export class StoreGenerationJobCommandHandler
             new Workflow(workflow),
         );
 
-        await this.repository.store(aggregate);
+        await this.repository.store(aggregate, command.sessionId);
 
         await this.queue.add(
             "queue_image",
